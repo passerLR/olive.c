@@ -95,7 +95,7 @@ uint8_t checker_example(void)
 uint8_t circle_example(void)
 {
     olivec_fill(pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
-    size_t radius = CELL_WIDTH < CELL_HEIGHT ? CELL_WIDTH : CELL_HEIGHT;
+    int radius = CELL_WIDTH < CELL_HEIGHT ? CELL_WIDTH : CELL_HEIGHT;
     radius >>= 1;
     for (int y = 0; y < ROWS; y++) {
         for (int x = 0; x < COLS; x++) {
@@ -104,7 +104,7 @@ uint8_t circle_example(void)
             // radius/c + (radius - radius/c)*t
             // radius/c + (c - 1)/c*radius*t
             // radius*(1 + (c - 1)*t)/4
-            olivec_fill_circle(pixels, WIDTH, HEIGHT, x*CELL_WIDTH + CELL_WIDTH/2, y*CELL_HEIGHT + CELL_HEIGHT/2, radius/8*(1 + 7*(x/(COLS*2.0) + y/(ROWS*2.0))), FOREGROUND_COLOR);
+            olivec_fill_circle(pixels, WIDTH, HEIGHT, x*CELL_WIDTH + CELL_WIDTH/2, y*CELL_HEIGHT + CELL_HEIGHT/2, -radius/8*(1 + 7*(x/(COLS*2.0) + y/(ROWS*2.0))), FOREGROUND_COLOR);
         }
     }
 

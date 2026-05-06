@@ -70,20 +70,24 @@ void olivec_fill_rect(uint32_t *pixels, size_t pixels_width, size_t pixels_heigh
 
 
 void olivec_fill_circle(uint32_t *pixels, size_t pixels_width, size_t pixels_height, 
-                        int cx, int cy, size_t r,
+                        int cx, int cy, int r,
                         uint32_t color)
 {
-    int x1 = cx - (int) r;
-    int y1 = cy - (int) r;
-    int x2 = cx + (int) r;
-    int y2 = cy + (int) r;
+    if (r == 0) return;
+    r = OLIVE_ABS(int, r);
+    int x1 = cx - r;
+    int x2 = cx + r;
+    // if (x1 > x2) OLIVE_SWAP(int, x1, x2);
+    int y1 = cy - r;
+    int y2 = cy + r;
+    // if (y1 > y2) OLIVE_SWAP(int, y1, y2);
     for (int y = y1; y <= y2; y++) {
         if (0 <= y && y < (int) pixels_height) {
             for (int x = x1; x <= x2; x++) {
                 if (0 <= x && x < (int) pixels_width) {
                     int dx = x - cx;
                     int dy = y - cy;
-                    if (dx*dx + dy*dy <= (int) (r*r)) {
+                    if (dx*dx + dy*dy <= r*r) {
                         pixels[y*pixels_width + x] = color;
                     }
                 }
