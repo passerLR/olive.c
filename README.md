@@ -4,6 +4,8 @@
 
 Simple 2D Graphics Library for C
 
+Output ".png" file using "stb_image_write" of ![stb](https://github.com/nothings/stb)
+
 ## Quick Start
 
 ``` console
@@ -19,3 +21,4 @@ $ ./a.out
 
 ![line](./imgs/line.png)
 
+![triangle](./imgs/triangle.png)
