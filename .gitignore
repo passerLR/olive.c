@@ -1,3 +1,4 @@
 *.ppm
 a.out
 *.exe
+.vscode
