@@ -1,19 +1,21 @@
 #include <stdio.h>
 #include <assert.h>
 #include "olive.c"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #define WIDTH 800
 #define HEIGHT 600
 
 static uint32_t pixels[HEIGHT*WIDTH];
 
-#define COLS (8*4)
-#define ROWS (6*4)
+#define COLS (8*2)
+#define ROWS (6*2)
 #define CELL_WIDTH  (WIDTH/COLS)
 #define CELL_HEIGHT (HEIGHT/ROWS)
 
 #define BACKGROUND_COLOR 0xFF202020
-#define FOREGROUND_COLOR 0xFF2020FF
+#define FOREGROUND_COLOR 0xFF0000FF
 
 uint8_t triangle_example(void)
 {
@@ -47,12 +49,16 @@ uint8_t triangle_example(void)
         olive_fill_triangle(pixels, WIDTH, HEIGHT, x1, y1, x2, y2, x3, y3, color);
     }
 
-    const char *file_path = "triangle.ppm";
-    Errno err = olivec_save_to_ppm_file(pixels, WIDTH, HEIGHT, file_path);
-    if (err) {
-        fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
-        return 1;
-    }
+    // const char *file_path = "triangle.ppm";
+    // Errno err = olivec_save_to_ppm_file(pixels, WIDTH, HEIGHT, file_path);
+    // if (err) {
+    //     fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
+    //     return 1;
+    // }
+
+    const char *file_path = "imgs/triangle.png";
+    int ok = stbi_write_png(file_path, WIDTH, HEIGHT, 4, pixels, WIDTH*sizeof(uint32_t));
+    assert(ok);
 
     return 0;
 }
@@ -72,12 +78,16 @@ uint8_t checker_example(void)
         }
     }
 
-    const char *file_path = "checker.ppm";
-    Errno err = olivec_save_to_ppm_file(pixels, WIDTH, HEIGHT, file_path);
-    if (err) {
-        fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
-        return 1;
-    }
+    // const char *file_path = "checker.ppm";
+    // Errno err = olivec_save_to_ppm_file(pixels, WIDTH, HEIGHT, file_path);
+    // if (err) {
+    //     fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
+    //     return 1;
+    // }
+
+    const char *file_path = "imgs/checker.png";
+    int ok = stbi_write_png(file_path, WIDTH, HEIGHT, 4, pixels, WIDTH*sizeof(uint32_t));
+    assert(ok);
 
     return 0;
 }
@@ -98,12 +108,16 @@ uint8_t circle_example(void)
         }
     }
 
-    const char *file_path = "circle.ppm";
-    Errno err = olivec_save_to_ppm_file(pixels, WIDTH, HEIGHT, file_path);
-    if (err) {
-        fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
-        return 1;
-    }
+    // const char *file_path = "circle.ppm";
+    // Errno err = olivec_save_to_ppm_file(pixels, WIDTH, HEIGHT, file_path);
+    // if (err) {
+    //     fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
+    //     return 1;
+    // }
+    
+    const char *file_path = "imgs/circle.png";
+    int ok = stbi_write_png(file_path, WIDTH, HEIGHT, 4, pixels, WIDTH*sizeof(uint32_t));
+    assert(ok);
 
     return 0;
 }
@@ -113,17 +127,21 @@ uint8_t line_example(void)
     olivec_fill(pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
     olivec_draw_line(pixels, WIDTH, HEIGHT, 0, 0, WIDTH, HEIGHT, FOREGROUND_COLOR);
     olivec_draw_line(pixels, WIDTH, HEIGHT, WIDTH, 0, 0, HEIGHT, FOREGROUND_COLOR);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, 0, 0, WIDTH/4, HEIGHT, 0x2000FF00);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, WIDTH/4, 0, 0, HEIGHT, 0x2000FF00);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, 0, HEIGHT/2, WIDTH, HEIGHT/2, 0x20FF3000);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, WIDTH/2, 0, WIDTH/2, HEIGHT,  0x20FF3000);
+    olivec_draw_line(pixels, WIDTH, HEIGHT, 0, 0, WIDTH/4, HEIGHT, 0xFF00FF00);
+    olivec_draw_line(pixels, WIDTH, HEIGHT, WIDTH/4, 0, 0, HEIGHT, 0xFF00FF00);
+    olivec_draw_line(pixels, WIDTH, HEIGHT, 0, HEIGHT/2, WIDTH, HEIGHT/2, 0xFFFF0000);
+    olivec_draw_line(pixels, WIDTH, HEIGHT, WIDTH/2, 0, WIDTH/2, HEIGHT,  0xFFFF0000);
 
-    const char *file_path = "line.ppm";
-    Errno err = olivec_save_to_ppm_file(pixels, WIDTH, HEIGHT, file_path);
-    if (err) {
-        fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
-        return 1;
-    }
+    // const char *file_path = "line.ppm";
+    // Errno err = olivec_save_to_ppm_file(pixels, WIDTH, HEIGHT, file_path);
+    // if (err) {
+    //     fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
+    //     return 1;
+    // }
+
+    const char *file_path = "imgs/line.png";
+    int ok = stbi_write_png(file_path, WIDTH, HEIGHT, 4, pixels, WIDTH*sizeof(uint32_t));
+    assert(ok);
 
     return 0;
 }
