@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #include "olive.c"
 
 #define WIDTH 800
@@ -14,46 +15,46 @@ static uint32_t pixels[HEIGHT*WIDTH];
 #define BACKGROUND_COLOR 0xFF202020
 #define FOREGROUND_COLOR 0xFF2020FF
 
-void swap_int(int *a, int *b)
+uint8_t triangle_example(void)
 {
-    int t = *a;
-    *a = *b;
-    *b = t;
-}
-
-void olivec_draw_line(uint32_t *pixels, size_t pixels_width, size_t pixels_height, 
-                      int x1, int y1, int x2, int y2, 
-                      uint32_t color)
-{
-    int dx = x2 - x1;
-    int dy = y2 - y1;
-    if (dx != 0) {
-        int c = y1 - dy*x1/dx;
-
-        if (x1 > x2) swap_int(&x1, &x2);
-        for (int x = x1; x <= x2; x++) {
-            if (0 <= x && x < (int) pixels_width) {
-                int ym = dy*x/dx + c;
-                int yp = dy*(x+1)/dx + c;
-                if (ym > yp) swap_int(&ym, &yp);
-                for(int y = ym; y <= yp; y++) {
-                    if (0 <= y && y < (int) pixels_height) {
-                        pixels[y*pixels_width + x] = color;
-                    }
-                }
-            }
-        }
-    } else {
-        int x = x1;
-        if (0 <= x && x < (int) pixels_width) {
-            if (y1 > y2) swap_int(&y1, &y2);
-            for (int y = y1; y <= y2; y++) {
-                if (0 <= y && y < (int) pixels_height) {
-                    pixels[y*pixels_width + x] = color;
-                }
-            }
-        }
+    olivec_fill(pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
+    {
+        int x1 = WIDTH/2, y1 = HEIGHT/8;
+        int x2 = WIDTH/8, y2 = HEIGHT/2;
+        int x3 = WIDTH*7/8, y3 = HEIGHT*7/8;
+        uint32_t color = 0xFF0000FF;
+        olive_fill_triangle(pixels, WIDTH, HEIGHT, x1, y1, x2, y2, x3, y3, color);
     }
+    {
+        int x1 = WIDTH*5/8, y1 = HEIGHT/8;
+        int x2 = WIDTH*3/8, y2 = HEIGHT/2;
+        int x3 = WIDTH*7/8, y3 = HEIGHT/2;
+        uint32_t color = 0xFF00FF00;
+        olive_fill_triangle(pixels, WIDTH, HEIGHT, x1, y1, x2, y2, x3, y3, color);
+    }
+    {
+        int x1 = WIDTH*3/8, y1 = HEIGHT/8;
+        int x2 = WIDTH*3/8, y2 = HEIGHT*3/8;
+        int x3 = WIDTH*5/8, y3 = HEIGHT*3/8;
+        uint32_t color = 0xFFFF0000;
+        olive_fill_triangle(pixels, WIDTH, HEIGHT, x1, y1, x2, y2, x3, y3, color);
+    }
+    {
+        int x1 = WIDTH*2/8, y1 = HEIGHT/8;
+        int x2 = WIDTH*2/8, y2 = HEIGHT*3/8;
+        int x3 = WIDTH*1/8, y3 = HEIGHT*3/8;
+        uint32_t color = 0xFFFFFFFF;
+        olive_fill_triangle(pixels, WIDTH, HEIGHT, x1, y1, x2, y2, x3, y3, color);
+    }
+
+    const char *file_path = "triangle.ppm";
+    Errno err = olivec_save_to_ppm_file(pixels, WIDTH, HEIGHT, file_path);
+    if (err) {
+        fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
+        return 1;
+    }
+
+    return 0;
 }
 
 uint8_t checker_example(void)
@@ -132,5 +133,6 @@ int main(void)
     if (checker_example()) return -1;
     if (circle_example()) return -1;
     if (line_example()) return -1;
+    if (triangle_example()) return -1;
     return 0;
 } 
