@@ -146,11 +146,25 @@ uint8_t line_example(void)
     return 0;
 }
 
+uint8_t rect_example(void)
+{
+    olivec_fill(pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
+    olivec_fill_rect(pixels, WIDTH, HEIGHT, 0, 0, WIDTH/2, HEIGHT/2, FOREGROUND_COLOR);
+    olivec_fill_rect(pixels, WIDTH, HEIGHT, WIDTH-1, HEIGHT-1, -WIDTH/2, -HEIGHT/2, 0xFF00FF00);
+
+    const char *file_path = "imgs/rect.png";
+    int ok = stbi_write_png(file_path, WIDTH, HEIGHT, 4, pixels, WIDTH*sizeof(uint32_t));
+    assert(ok);
+
+    return 0;
+}
+
 int main(void)
 {
     if (checker_example()) return -1;
     if (circle_example()) return -1;
     if (line_example()) return -1;
     if (triangle_example()) return -1;
+    if (rect_example()) return -1;
     return 0;
 } 
