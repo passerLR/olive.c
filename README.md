@@ -21,3 +21,4 @@ $ ./a.out
 
 ![line](./imgs/line.png)
 
+![triangle](./imgs/triangle.png)
