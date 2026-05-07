@@ -1,8 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <string.h>
-#include <errno.h>
 
 #define OLIVE_SWAP(T, a, b) do {T t = a; a = b; b = t;} while (0)
 #define OLIVE_SIGN(T, x) ((T)((x) > 0) - (T)((x) < 0))
@@ -16,8 +14,7 @@ void olivec_fill(uint32_t *pixels, size_t width, size_t height, uint32_t color)
     }
 }
 
-typedef int Errno;
-#define return_defer(value) do { result = (value); goto defer; } while(0)
+/*
 Errno olivec_save_to_ppm_file(uint32_t *pixels, size_t width, size_t height, const char *file_path)
 {
     int result = 0;
@@ -46,6 +43,7 @@ defer:
     if (f) fclose(f);
     return result;
 }
+*/
 
 void olivec_fill_rect(uint32_t *pixels, size_t pixels_width, size_t pixels_height, 
                       int x0, int y0, int w, int h, 
@@ -147,11 +145,11 @@ void sort_triangle_points_by_y(int *x1, int *y1, int *x2, int *y2, int *x3, int 
         OLIVE_SWAP(int, *y1, *y2);
     }
 }
-void olive_fill_triangle(uint32_t *pixels, size_t width, size_t height, 
-                         int x1, int y1,
-                         int x2, int y2,
-                         int x3, int y3,
-                         uint32_t color)
+void olivec_fill_triangle(uint32_t *pixels, size_t width, size_t height, 
+                          int x1, int y1,
+                          int x2, int y2,
+                          int x3, int y3,
+                          uint32_t color)
 {
     sort_triangle_points_by_y(&x1, &y1, &x2, &y2, &x3, &y3);
     int dx12 = x2 - x1;
