@@ -22,34 +22,35 @@ static uint32_t pixels[HEIGHT*WIDTH];
 
 uint8_t triangle_example(void)
 {
-    olivec_fill(pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
+    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+    olivec_fill(oc, BACKGROUND_COLOR);
     {
         int x1 = WIDTH/2, y1 = HEIGHT/8;
         int x2 = WIDTH/8, y2 = HEIGHT/2;
         int x3 = WIDTH*7/8, y3 = HEIGHT*7/8;
         uint32_t color = 0xFF0000FF;
-        olivec_fill_triangle(pixels, WIDTH, HEIGHT, x1, y1, x2, y2, x3, y3, color);
+        olivec_fill_triangle(oc, x1, y1, x2, y2, x3, y3, color);
     }
     {
         int x1 = WIDTH*5/8, y1 = HEIGHT/8;
         int x2 = WIDTH*3/8, y2 = HEIGHT/2;
         int x3 = WIDTH*7/8, y3 = HEIGHT/2;
         uint32_t color = 0xFF00FF00;
-        olivec_fill_triangle(pixels, WIDTH, HEIGHT, x1, y1, x2, y2, x3, y3, color);
+        olivec_fill_triangle(oc, x1, y1, x2, y2, x3, y3, color);
     }
     {
         int x1 = WIDTH*3/8, y1 = HEIGHT/8;
         int x2 = WIDTH*3/8, y2 = HEIGHT*3/8;
         int x3 = WIDTH*5/8, y3 = HEIGHT*3/8;
         uint32_t color = 0xFFFF0000;
-        olivec_fill_triangle(pixels, WIDTH, HEIGHT, x1, y1, x2, y2, x3, y3, color);
+        olivec_fill_triangle(oc, x1, y1, x2, y2, x3, y3, color);
     }
     {
         int x1 = WIDTH*2/8, y1 = HEIGHT/8;
         int x2 = WIDTH*2/8, y2 = HEIGHT*3/8;
         int x3 = WIDTH*1/8, y3 = HEIGHT*3/8;
         uint32_t color = 0xFFFFFFFF;
-        olivec_fill_triangle(pixels, WIDTH, HEIGHT, x1, y1, x2, y2, x3, y3, color);
+        olivec_fill_triangle(oc, x1, y1, x2, y2, x3, y3, color);
     }
 
     const char *file_path = IMG_DIR_PATH"/triangle.png";
@@ -64,7 +65,9 @@ uint8_t triangle_example(void)
 
 uint8_t checker_example(void)
 {
-    olivec_fill(pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
+    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+    olivec_fill(oc, BACKGROUND_COLOR);
+
     for (int y = 0; y < ROWS; y++) {
         for (int x = 0; x < COLS; x++) {
             uint32_t color;
@@ -73,7 +76,7 @@ uint8_t checker_example(void)
             } else {
                 color = FOREGROUND_COLOR;
             }
-            olivec_fill_rect(pixels, WIDTH, HEIGHT, x*CELL_WIDTH, y*CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT, color);
+            olivec_fill_rect(oc, x*CELL_WIDTH, y*CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT, color);
         }
     }
 
@@ -89,7 +92,9 @@ uint8_t checker_example(void)
 
 uint8_t circle_example(void)
 {
-    olivec_fill(pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
+    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+    olivec_fill(oc, BACKGROUND_COLOR);
+
     int radius = CELL_WIDTH < CELL_HEIGHT ? CELL_WIDTH : CELL_HEIGHT;
     radius >>= 1;
     for (int y = 0; y < ROWS; y++) {
@@ -99,7 +104,7 @@ uint8_t circle_example(void)
             // radius/c + (radius - radius/c)*t
             // radius/c + (c - 1)/c*radius*t
             // radius*(1 + (c - 1)*t)/4
-            olivec_fill_circle(pixels, WIDTH, HEIGHT, x*CELL_WIDTH + CELL_WIDTH/2, y*CELL_HEIGHT + CELL_HEIGHT/2, -radius/8*(1 + 7*(x/(COLS*2.0) + y/(ROWS*2.0))), FOREGROUND_COLOR);
+            olivec_fill_circle(oc, x*CELL_WIDTH + CELL_WIDTH/2, y*CELL_HEIGHT + CELL_HEIGHT/2, -radius/8*(1 + 7*(x/(COLS*2.0) + y/(ROWS*2.0))), FOREGROUND_COLOR);
         }
     }
 
@@ -115,13 +120,15 @@ uint8_t circle_example(void)
 
 uint8_t line_example(void)
 {
-    olivec_fill(pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, 0, 0, WIDTH, HEIGHT, FOREGROUND_COLOR);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, WIDTH, 0, 0, HEIGHT, FOREGROUND_COLOR);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, 0, 0, WIDTH/4, HEIGHT, 0xFF00FF00);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, WIDTH/4, 0, 0, HEIGHT, 0xFF00FF00);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, 0, HEIGHT/2, WIDTH, HEIGHT/2, 0xFFFF0000);
-    olivec_draw_line(pixels, WIDTH, HEIGHT, WIDTH/2, 0, WIDTH/2, HEIGHT,  0xFFFF0000);
+    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+
+    olivec_fill(oc, BACKGROUND_COLOR);
+    olivec_draw_line(oc, 0, 0, WIDTH, HEIGHT, FOREGROUND_COLOR);
+    olivec_draw_line(oc, WIDTH, 0, 0, HEIGHT, FOREGROUND_COLOR);
+    olivec_draw_line(oc, 0, 0, WIDTH/4, HEIGHT, 0xFF00FF00);
+    olivec_draw_line(oc, WIDTH/4, 0, 0, HEIGHT, 0xFF00FF00);
+    olivec_draw_line(oc, 0, HEIGHT/2, WIDTH, HEIGHT/2, 0xFFFF0000);
+    olivec_draw_line(oc, WIDTH/2, 0, WIDTH/2, HEIGHT,  0xFFFF0000);
 
     const char *file_path = IMG_DIR_PATH"/line.png";
     printf("Generated %s\n", file_path);
@@ -135,9 +142,11 @@ uint8_t line_example(void)
 
 uint8_t rect_example(void)
 {
-    olivec_fill(pixels, WIDTH, HEIGHT, BACKGROUND_COLOR);
-    olivec_fill_rect(pixels, WIDTH, HEIGHT, 0, 0, WIDTH/2, HEIGHT/2, FOREGROUND_COLOR);
-    olivec_fill_rect(pixels, WIDTH, HEIGHT, WIDTH-1, HEIGHT-1, -WIDTH/2, -HEIGHT/2, 0xFF00FF00);
+    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+
+    olivec_fill(oc, BACKGROUND_COLOR);
+    olivec_fill_rect(oc, 0, 0, WIDTH/2, HEIGHT/2, FOREGROUND_COLOR);
+    olivec_fill_rect(oc, WIDTH-1, HEIGHT-1, -WIDTH/2, -HEIGHT/2, 0xFF00FF00);
 
     const char *file_path = IMG_DIR_PATH"/rect.png";
     printf("Generated %s\n", file_path);
