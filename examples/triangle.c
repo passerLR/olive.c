@@ -45,7 +45,7 @@ uint32_t *render(float dt)
     return pixels;
 }
 
-
+/*
 #ifdef SDL_PLATFORM
 #include <stdio.h>
 #include <SDL2/SDL.h>
@@ -117,3 +117,4 @@ defer:
     return result;
 }
 #endif // SDL_PLATFORM
+*/
