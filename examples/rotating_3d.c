@@ -1,5 +1,5 @@
 /*
-    This example renders a rotating dot matrix with 3D blending.
+    This example renders a rotating dot matrix with 3D rendering.
     This idea is that you can take this code and compile it to different platforms with different rendering machanisms:
     native with SDL, WebAssembly with HTML5 canvas, etc.
 */
