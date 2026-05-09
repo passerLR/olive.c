@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
-#include "olive.c"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+#define OLIVEC_IMPLEMENTATION
+#include "olive.c"
 
 #define WIDTH  800
 #define HEIGHT 600
@@ -22,7 +23,7 @@ static uint32_t pixels[HEIGHT*WIDTH];
 
 uint8_t triangle_example(void)
 {
-    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT);
     olivec_fill(oc, BACKGROUND_COLOR);
     {
         int x1 = WIDTH/2, y1 = HEIGHT/8;
@@ -65,7 +66,7 @@ uint8_t triangle_example(void)
 
 uint8_t checker_example(void)
 {
-    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT);
     olivec_fill(oc, BACKGROUND_COLOR);
 
     for (int y = 0; y < ROWS; y++) {
@@ -92,7 +93,7 @@ uint8_t checker_example(void)
 
 uint8_t circle_example(void)
 {
-    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT);
     olivec_fill(oc, BACKGROUND_COLOR);
 
     int radius = CELL_WIDTH < CELL_HEIGHT ? CELL_WIDTH : CELL_HEIGHT;
@@ -120,7 +121,7 @@ uint8_t circle_example(void)
 
 uint8_t line_example(void)
 {
-    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT);
 
     olivec_fill(oc, BACKGROUND_COLOR);
     olivec_draw_line(oc, 0, 0, WIDTH, HEIGHT, FOREGROUND_COLOR);
@@ -142,7 +143,7 @@ uint8_t line_example(void)
 
 uint8_t rect_example(void)
 {
-    Olivec_Canvas oc = olivec_make_canvas(pixels, WIDTH, HEIGHT);
+    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT);
 
     olivec_fill(oc, BACKGROUND_COLOR);
     olivec_fill_rect(oc, 0, 0, WIDTH/2, HEIGHT/2, FOREGROUND_COLOR);

@@ -1,79 +1,73 @@
 /*
-    This example renders a rotating triangle.
+    This example renders a rotating dot matrix with 3D blending.
     This idea is that you can take this code and compile it to different platforms with different rendering machanisms:
     native with SDL, WebAssembly with HTML5 canvas, etc.
 */
 #define OLIVEC_IMPLEMENTATION
 #include "olive.c"
 
-#define WIDTH 800
-#define HEIGHT 600
-#define BACKGROUND_COLOR 0xFF181818
-#define CIRCLE_RADIUS 100
-#define CIRCLE_COLOR 0x99AA2020
-
-static uint32_t pixels[WIDTH*HEIGHT];
-static float triangle_angle = 0;
-static float circle_x = WIDTH/2;
-static float circle_y = HEIGHT/2;
-static float circle_dx = 100;
-static float circle_dy = 100;
-
 float sqrtf(float x);
 float atan2f(float y, float x);
 float sinf(float x);
 float cosf(float x);
-
 #define PI 3.14159265359
 
-static inline void rotate_point(float *x, float *y)
+#define WIDTH 800
+#define HEIGHT 600
+#define BACKGROUND_COLOR 0xFF181818
+#define CIRCLE_COLOR 0xFF2020AA
+#define PAGS 8
+#define COLS 8
+#define ROWS 8
+#define GRID_INTERVAL 0.1
+#define CIRCLE_RADIUS 5
+#define Z_OFFSET 0.5
+
+static uint32_t pixels[WIDTH*HEIGHT];
+
+// TODO: Specify the origin, axis, and angle to achieve spatial rotation
+static inline void rotate_point(float *x, float *y, float cx, float cy, float beta)
 {
-    float dx = *x - WIDTH/2;
-    float dy = *y - HEIGHT/2;
-    float mag = sqrtf(dx*dx + dy*dy);
-    float dir = atan2f(dy, dx) + triangle_angle;
-    *x = cosf(dir)*mag + WIDTH/2;
-    *y = sinf(dir)*mag + HEIGHT/2;
+    float xt = *x - cx;
+    float yt = *y - cy;
+
+    *x = cosf(beta)*xt - sinf(beta)*yt + cx;
+    *y = sinf(beta)*xt + cosf(beta)*yt + cy;
 }
+
+float theta = 0;
 
 uint32_t *render(float dt)
 {
-    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT);
+    theta += dt*PI*0.25;
 
+    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT);
     olivec_fill(oc, BACKGROUND_COLOR);
 
-    // Triangle
-    {
-        triangle_angle += 0.5f*PI*dt;
+    for (int k = 0; k < PAGS; k++) {
+        for (int i = 0; i < COLS; i++) {
+            for (int j = 0; j < ROWS; j++) {
+                float x = i*GRID_INTERVAL - (COLS-1)*GRID_INTERVAL/2;
+                float y = j*GRID_INTERVAL - (ROWS-1)*GRID_INTERVAL/2;
+                float z = k*GRID_INTERVAL + Z_OFFSET;
 
-        float x1 = WIDTH/2, y1 = HEIGHT/8;
-        float x2 = WIDTH/8, y2 = HEIGHT/2;
-        float x3 = WIDTH*7/8, y3 = HEIGHT*7/8;
-        rotate_point(&x1, &y1);
-        rotate_point(&x2, &y2);
-        rotate_point(&x3, &y3);
-        olivec_fill_triangle(oc, x1, y1, x2, y2, x3, y3, 0xFF2020AA);
-    }
+                float cx = 0;
+                float cy = 0;
+                float cz = Z_OFFSET + (PAGS - 1)*GRID_INTERVAL/2;
+                
+                rotate_point(&x, &y, cx, cy, theta);
+                rotate_point(&y, &z, cy, cz, theta);
+                rotate_point(&x, &z, cx, cz, theta);
 
-    // Circle
-    {
-        float x = circle_x + circle_dx*dt;
-        if (x - CIRCLE_RADIUS < 0 || x + CIRCLE_RADIUS >= WIDTH) {
-            circle_dx *= -1;
-        } else {
-            circle_x = x;
+                uint32_t r = i*255/COLS;
+                uint32_t g = j*255/ROWS;
+                uint32_t b = k*255/PAGS;
+                uint32_t color = 0xFF000000 | (r<<(0*8)) | (g<<(1*8)) | (b<<(2*8));
+
+                olivec_fill_circle(oc, x/z*HEIGHT/2 + WIDTH/2, (y/z + 1)*HEIGHT/2, CIRCLE_RADIUS, color);                
+            }
         }
-
-        float y = circle_y + circle_dy*dt;
-        if (y - CIRCLE_RADIUS < 0 || y + CIRCLE_RADIUS >= HEIGHT) {
-            circle_dy *= -1;
-        } else {
-            circle_y = y;
-        }
-
-        olivec_fill_circle(oc, circle_x, circle_y, CIRCLE_RADIUS, CIRCLE_COLOR);
     }
-
     return pixels;
 }
 
