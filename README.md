@@ -19,6 +19,8 @@ Output ".png" file using "stb_image_write" of ![stb](https://github.com/nothings
 
 ![rectangle](./imgs/rect.png)
 
+![text](./imgs/text.png)
+
 
 ## Quick Start
 

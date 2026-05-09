@@ -159,6 +159,34 @@ uint8_t rect_example(void)
     return 0;
 }
 
+uint8_t text_example(void)
+{
+    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT);
+
+    olivec_fill(oc, BACKGROUND_COLOR);
+    const char text[] = "the quick brown fox jumps over the lazy dog.";
+    const char lowercase[] = "abcdefghijklmnopqrstuvwxyz";
+    const char uppercase[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const char number[]    = "01234567890123456789";
+    const char symbols1[]  = ". , : ; \" \' ! ? + - * / % = ~ |";
+    const char symbols2[]  = "@ # $ _ ^ \\ & < > ( ) [ ] { }";
+    olivec_text(oc, text, default_font, 0, 0, 2, 0xFFFFFFFF);
+    olivec_text(oc, lowercase, default_font, 0, HEIGHT*1/8, 3, 0xFFFFFFFF);
+    olivec_text(oc, uppercase, default_font, 0, HEIGHT*2/8, 3, 0xFFFFFFFF);
+    olivec_text(oc, number,    default_font, 0, HEIGHT*3/8, 3, 0xFFFFFFFF);
+    olivec_text(oc, symbols1,  default_font, 0, HEIGHT*4/8, 3, 0xFFFFFFFF);
+    olivec_text(oc, symbols2,  default_font, 0, HEIGHT*5/8, 3, 0xFFFFFFFF);
+
+    const char *file_path = IMG_DIR_PATH"/text.png";
+    printf("Generated %s\n", file_path);
+    if (!stbi_write_png(file_path, WIDTH, HEIGHT, 4, pixels, WIDTH*sizeof(uint32_t))) {
+        fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
+        return 1;
+    }
+
+    return 0;
+}
+
 int main(void)
 {
     if (checker_example()) return -1;
@@ -166,6 +194,7 @@ int main(void)
     if (line_example()) return -1;
     if (triangle_example()) return -1;
     if (rect_example()) return -1;
+    if (text_example()) return -1;
     return 0;
 } 
 
