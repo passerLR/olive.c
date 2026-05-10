@@ -615,7 +615,7 @@ static char default_font_glyphs[128][DEFAULT_FONT_HEIGHT][DEFAULT_FONT_WIDTH] = 
         {0, 0, 0, 0, 0},
     },
 };
-static Olivec_Font default_font = {
+Olivec_Font default_font = {
     .glyphs = &default_font_glyphs[0][0][0],
     .height = DEFAULT_FONT_HEIGHT,
     .width  = DEFAULT_FONT_WIDTH,
