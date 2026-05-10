@@ -94,10 +94,12 @@ char color_to_char(uint32_t pixel)
     uint32_t r = OLIVEC_RED(pixel);
     uint32_t g = OLIVEC_GREEN(pixel);
     uint32_t b = OLIVEC_BLUE(pixel);
+    uint32_t a = OLIVEC_ALPHA(pixel);
     
     size_t bright = r;
     if (bright < g) bright = g;
     if (bright < b) bright = b;
+    bright = bright*a/255;
 
     char table[] = " .:a@#";
     size_t n = sizeof(table) - 1;
@@ -142,7 +144,8 @@ SCALE_DOWN_FACTOR);
 
 int main(void)
 {
-    printf("\x1b[2J\x1b[?25l");
+    printf("\x1b[2J");
+    // printf("\x1b[?25l");
     for (;;) {
         compress_pixels(render(1.f/60.f));
         for (size_t y = 0; y < SCALED_DOWN_HEIGHT; ++y) {

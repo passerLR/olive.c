@@ -47,12 +47,7 @@ async function startExample(elementId, wasmPath) {
         const buffer = w.instance.exports.memory.buffer;
         const image = new ImageData(new Uint8ClampedArray(buffer, pixels, app.width*app.height*4), app.width);
         ctx.putImageData(image, 0, 0);
-
         window.requestAnimationFrame(loop);
     }
     window.requestAnimationFrame(first);
 }
-
-startExample("app-triangle", "./bin/triangle.wasm");
-startExample("app-rotating_3d", "./bin/rotating_3d.wasm");
-startExample("app-squish", "./bin/squish.wasm");

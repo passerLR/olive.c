@@ -36,28 +36,6 @@
 
 #define TEST_DIR_PATH "./test"
 
-char hexchar(uint8_t x)
-{
-    if (x < 10) return x + '0';
-    if (x < 16) return x - 10 + 'A';
-    UNREACHABLE("hexchar");
-}
-const char *display_hexcolor(uint32_t c)
-{
-    static char buffer[1 + 8 + 1];
-    buffer[0] = '#';
-    buffer[1] = hexchar((c>>(1*4))&0xF);
-    buffer[2] = hexchar((c>>(0*4))&0xF);
-    buffer[3] = hexchar((c>>(3*4))&0xF);
-    buffer[4] = hexchar((c>>(2*4))&0xF);
-    buffer[5] = hexchar((c>>(5*4))&0xF);
-    buffer[6] = hexchar((c>>(4*4))&0xF);
-    buffer[7] = hexchar((c>>(7*4))&0xF);
-    buffer[8] = hexchar((c>>(6*4))&0xF);
-    buffer[9] = '\0';
-    return buffer;
-}
-
 #define WIDTH 128
 #define HEIGHT 128
 

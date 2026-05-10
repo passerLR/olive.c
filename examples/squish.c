@@ -20,7 +20,7 @@ uint32_t *render(float dt)
 {
     global_time += dt;
 
-    float t = sinf(0.8*global_time);
+    float t = sinf(5*global_time);
 
     Olivec_Canvas dst_canvas = olivec_canvas(dst, WIDTH, HEIGHT, WIDTH);
     olivec_fill(dst_canvas, 0xFF181818);
