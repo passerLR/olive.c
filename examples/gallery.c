@@ -187,6 +187,35 @@ uint8_t text_example(void)
     return 0;
 }
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "./stb_image.h"
+uint8_t kun_example(void)
+{
+    const char *filepath = "./assets/kun.png";
+    int x, y, n;
+    uint32_t *data = (uint32_t *)stbi_load(filepath, &x, &y, &n, 4);
+    if (data == NULL) {
+        fprintf(stderr, "Could not load file `%s`: %s\n", filepath, strerror(errno));
+        return 1;
+    }
+
+    olivec_fill(olivec_canvas(pixels, WIDTH, HEIGHT, WIDTH), 0xFF0000FF);
+    assert(x < WIDTH);
+    assert(y < HEIGHT);
+    olivec_copy(
+        olivec_canvas(pixels, WIDTH, HEIGHT, WIDTH),
+        olivec_canvas(data, x, y, x));
+
+    const char *file_path = IMG_DIR_PATH"/kun.png";
+    printf("Generated %s\n", file_path);
+    if (!stbi_write_png(file_path, WIDTH, HEIGHT, 4, pixels, WIDTH*sizeof(uint32_t))) {
+        fprintf(stderr, "ERROR: could not save file %s: %s\n", file_path, strerror(errno));
+        return 1;
+    }
+
+    return 0;
+}
+
 int main(void)
 {
     if (checker_example()) return -1;
@@ -195,6 +224,7 @@ int main(void)
     if (triangle_example()) return -1;
     if (rect_example()) return -1;
     if (text_example()) return -1;
+    if (kun_example()) return -1;
     return 0;
 } 
 

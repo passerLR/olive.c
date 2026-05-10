@@ -55,4 +55,4 @@ async function startExample(elementId, wasmPath) {
 
 startExample("app-triangle", "./bin/triangle.wasm");
 startExample("app-rotating_3d", "./bin/rotating_3d.wasm");
-// startExample("app-squish", "./build/squish.wasm");
+startExample("app-squish", "./bin/squish.wasm");
