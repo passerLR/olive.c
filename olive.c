@@ -22,7 +22,7 @@ typedef struct {
 #define OLIVEC_CANVAS_NULL ((Olivec_Canvas) {0})
 #define OLIVEC_PIXEL(oc, x, y) (oc).pixels[(y)*(oc).stride + (x)]
 
-OLIVECDEF Olivec_Canvas olivec_canvas(uint32_t *pixels, size_t width, size_t height);
+OLIVECDEF Olivec_Canvas olivec_canvas(uint32_t *pixels, size_t width, size_t height, size_t stride);
 OLIVECDEF Olivec_Canvas olivec_subcanvas(Olivec_Canvas oc, int x, int y, int w, int h);
 OLIVECDEF void olivec_blend_color(uint32_t *c1, uint32_t c2);
 OLIVECDEF void olivec_fill(Olivec_Canvas oc, uint32_t color);
@@ -626,13 +626,13 @@ OLIVECDEF void olivec_text(Olivec_Canvas oc, const char *text, Olivec_Font font,
 
 #ifdef OLIVEC_IMPLEMENTATION
 
-OLIVECDEF Olivec_Canvas olivec_canvas(uint32_t *pixels, size_t width, size_t height)
+OLIVECDEF Olivec_Canvas olivec_canvas(uint32_t *pixels, size_t width, size_t height, size_t stride)
 {
     Olivec_Canvas oc = {
         .pixels = pixels,
         .width  = width,
         .height = height,
-        .stride = width,
+        .stride = stride,
     };
     return oc;
 }

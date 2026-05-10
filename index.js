@@ -1,8 +1,3 @@
-let app = document.getElementById("app");
-app.width = 800;
-app.height = 600;
-let ctx = app.getContext("2d");
-let w = null;
 
 function make_environment(...envs) {
     return new Proxy(envs, {
@@ -17,16 +12,28 @@ function make_environment(...envs) {
     });
 }
 
-WebAssembly.instantiateStreaming(fetch('./bin/rotating_3d.wasm'), {
-    "env": make_environment({
-        "atan2f": Math.atan2,
-        "cosf": Math.cos,
-        "sinf": Math.sin,
-        "sqrtf": Math.sqrt,
-    })
-}).then(w0 => {
-    w = w0;
+const libm = {
+    "atan2f": Math.atan2,
+    "cosf": Math.cos,
+    "sinf": Math.sin,
+    "sqrtf": Math.sqrt,
+};
 
+async function startExample(elementId, wasmPath) {
+    const app = document.getElementById(elementId);
+    if (app === null) {
+        console.error(`Could not find element ${elementId}. Skipping example ${wasmPath}...`);
+        return;
+    }
+
+    app.width = 800;
+    app.height = 600;
+    const ctx = app.getContext("2d");
+    const w = await WebAssembly.instantiateStreaming(fetch(wasmPath), {
+        "env": make_environment(libm)
+    });
+
+    w.instance.exports.init();
     let prev = null;
     function first(timestamp) {
         prev = timestamp;
@@ -44,4 +51,8 @@ WebAssembly.instantiateStreaming(fetch('./bin/rotating_3d.wasm'), {
         window.requestAnimationFrame(loop);
     }
     window.requestAnimationFrame(first);
-})
+}
+
+startExample("app-triangle", "./bin/triangle.wasm");
+startExample("app-rotating_3d", "./bin/rotating_3d.wasm");
+// startExample("app-squish", "./build/squish.wasm");
