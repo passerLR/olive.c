@@ -13,8 +13,8 @@ build_vc_example() {
 
 mkdir -p ./bin/
 gcc -Wall -Wextra -ggdb -o ./bin/test -Ithirdparty test.c -lm &
-gcc -Wall -Wextra -ggdb -o ./bin/gallery -Ithirdparty -I. examples/gallery.c &
-gcc -Wall -Wextra -ggdb -o ./bin/png2c -Ithirdparty png2c.c &
+gcc -Wall -Wextra -ggdb -o ./bin/gallery -Ithirdparty -I. examples/gallery.c -lm &
+gcc -Wall -Wextra -ggdb -o ./bin/png2c -Ithirdparty png2c.c -lm &
 wait
 
 # mkdir -p ./build/assets/
