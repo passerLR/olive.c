@@ -55,6 +55,7 @@ static void *context_realloc(void *oldp, size_t oldsz, size_t newsz)
 
 #define BACKGROUND_COLOR 0xFF202020
 #define FOREGROUND_COLOR 0xFF0000FF
+#define WHITE_COLOR 0xFFAAAAAA
 #define RED_COLOR   0xFF2020AA
 #define GREEN_COLOR 0xFF20AA20
 #define BLUE_COLOR  0xFFAA2020
@@ -367,14 +368,16 @@ Olivec_Canvas kun_example(void)
     }
     // printf("%d, %d, %d\n", x, y, n);
 
-    int width  = 800;
-    int height = 600;
-    uint32_t *pixels = context_alloc(width*height*sizeof(uint32_t));
-    olivec_fill(olivec_canvas(pixels, width, height, width), 0xFF0000FF);
-    assert(x < width);
-    assert(y < height);
-    Olivec_Canvas oc = olivec_canvas(pixels, width, height, width);
-    olivec_copy(oc, olivec_canvas(data, x, y, x));
+    size_t width  = 128;
+    size_t height = 128;
+    Olivec_Canvas oc = canvas_alloc(width, height);
+    olivec_fill(oc, 0xFF1818FF);
+    olivec_copy(
+        oc,
+        olivec_canvas(data, x, y, x),
+        0, 0, width, height);
+        //width/2, height/2, width, height);
+
     return oc;
 }
 
@@ -393,6 +396,49 @@ Olivec_Canvas test_line_edge_cases(void)
     return oc;
 }
 
+Olivec_Canvas test_frame(void)
+{
+    size_t width = 128;
+    size_t height = 128;
+    Olivec_Canvas oc = canvas_alloc(width, height);
+    olivec_fill(oc, BACKGROUND_COLOR);
+
+    {
+        size_t w = width/2;
+        size_t h = width/2;
+        olivec_frame(oc, 0, 0, w, h, 1, RED_COLOR);
+        olivec_frame(oc, width/2, height/2, w, h, 1, GREEN_COLOR);
+    }
+
+    // Odd thiccness
+    {
+        size_t w = width/2;
+        size_t h = width/2;
+        size_t t = 5;
+        olivec_frame(oc, width/2 - w/2, height/2 - h/2, w, h, t, WHITE_COLOR);
+        olivec_frame(oc, width/2 - w/2, height/2 - h/2, w, h, 1, RED_COLOR);
+    }
+
+    // Even thiccness
+    {
+        size_t w = width/4;
+        size_t h = width/4;
+        size_t t = 6;
+        olivec_frame(oc, width/2 - w/2, height/2 - h/2, w, h, t, WHITE_COLOR);
+        olivec_frame(oc, width/2 - w/2, height/2 - h/2, w, h, 1, RED_COLOR);
+    }
+
+    // Zero thiccness
+    {
+        size_t w = width/8;
+        size_t h = width/8;
+        size_t t = 0;
+        olivec_frame(oc, width/2 - w/2, height/2 - h/2, w, h, t, WHITE_COLOR);
+    }
+
+    return oc;
+}
+
 Test_Case test_cases[] = {
     DEFINE_TEST_CASE(test_fill_rect),
     DEFINE_TEST_CASE(test_fill_circle),
@@ -405,6 +451,7 @@ Test_Case test_cases[] = {
     DEFINE_TEST_CASE(text_example),
     DEFINE_TEST_CASE(kun_example),
     DEFINE_TEST_CASE(test_line_edge_cases),
+    DEFINE_TEST_CASE(test_frame),
 };
 
 #define TEST_CASES_COUNT (sizeof(test_cases)/sizeof(test_cases[0]))
