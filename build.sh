@@ -23,4 +23,5 @@ gcc $COMMON_CFLAGS -o ./bin/png2c png2c.c -lm
 build_vc_example triangle &
 build_vc_example rotating_3d &
 build_vc_example squish &
+build_vc_example triangle_3d &
 wait
