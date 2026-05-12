@@ -1,22 +1,19 @@
-#define OLIVEC_IMPLEMENTATION
-#include "./olive.c"
+#define SCALE_DOWN_FACTOR 10
+#include "vc.c"
 
 #include "./assets/kun.c"
 
 #define WIDTH 800
 #define HEIGHT 600
-#define SCALE_DOWN_FACTOR 10
 
 float sinf(float);
 
 uint32_t dst[WIDTH*HEIGHT];
 float global_time = 0;
 
-void init(void){}
-
 #define SRC_SCALE 3
 
-uint32_t *render(float dt)
+Olivec_Canvas render(float dt)
 {
     global_time += dt;
 
@@ -33,7 +30,6 @@ uint32_t *render(float dt)
         olivec_subcanvas(dst_canvas, WIDTH/2 - w/2, HEIGHT - h, w, h),
         olivec_canvas(png, png_width, png_height, png_width));
 
-    return dst;
+    return dst_canvas;
 }
 
-#include "vc.c"

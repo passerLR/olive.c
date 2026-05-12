@@ -3,12 +3,11 @@
     This idea is that you can take this code and compile it to different platforms with different rendering machanisms:
     native with SDL, WebAssembly with HTML5 canvas, etc.
 */
-#define OLIVEC_IMPLEMENTATION
-#include "olive.c"
+#define SCALE_DOWN_FACTOR 20
+#include "vc.c"
 
 #define WIDTH 800
 #define HEIGHT 600
-#define SCALE_DOWN_FACTOR 20
 #define BACKGROUND_COLOR 0xFF181818
 #define CIRCLE_RADIUS 100
 #define CIRCLE_COLOR 0x99AA2020
@@ -37,9 +36,7 @@ static inline void rotate_point(float *x, float *y)
     *y = sinf(dir)*mag + HEIGHT/2;
 }
 
-void init(void) {}
-
-uint32_t *render(float dt)
+Olivec_Canvas render(float dt)
 {
     Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT, WIDTH);
 
@@ -55,7 +52,6 @@ uint32_t *render(float dt)
         rotate_point(&x1, &y1);
         rotate_point(&x2, &y2);
         rotate_point(&x3, &y3);
-        // olivec_fill_triangle(oc, x1, y1, x2, y2, x3, y3, 0xFF2020AA);
         olivec_fill_triangle3(oc, x1, y1, x2, y2, x3, y3, 0xFF2020AA, 0xFF20AA20, 0xFFAA2020);
     }
 
@@ -78,7 +74,6 @@ uint32_t *render(float dt)
         olivec_fill_circle(oc, circle_x, circle_y, CIRCLE_RADIUS, CIRCLE_COLOR);
     }
 
-    return pixels;
+    return oc;
 }
 
-#include "vc.c"

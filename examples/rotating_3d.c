@@ -3,18 +3,15 @@
     This idea is that you can take this code and compile it to different platforms with different rendering machanisms:
     native with SDL, WebAssembly with HTML5 canvas, etc.
 */
-#define OLIVEC_IMPLEMENTATION
-#include "olive.c"
+#define SCALE_DOWN_FACTOR 10
+#include "vc.c"
 
-float sqrtf(float x);
-float atan2f(float y, float x);
 float sinf(float x);
 float cosf(float x);
 #define PI 3.14159265359
 
 #define WIDTH 800
 #define HEIGHT 600
-#define SCALE_DOWN_FACTOR 10
 #define BACKGROUND_COLOR 0xFF181818
 #define CIRCLE_COLOR 0xFF2020AA
 #define PAGS 8
@@ -36,11 +33,9 @@ static inline void rotate_point(float *x, float *y, float cx, float cy, float be
     *y = sinf(beta)*xt + cosf(beta)*yt + cy;
 }
 
-void init(void) {}
-
 float theta = 0;
 
-uint32_t *render(float dt)
+Olivec_Canvas render(float dt)
 {
     theta += dt*PI*0.25;
 
@@ -71,7 +66,6 @@ uint32_t *render(float dt)
             }
         }
     }
-    return pixels;
+    return oc;
 }
 
-#include "vc.c"
