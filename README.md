@@ -9,13 +9,13 @@ Output ".png" file using "stb_image_write" of ![stb](https://github.com/nothings
 
 ## Gallery
 
+![hello_world](./test/test_hello_world_expected.png)
+
 ![circle](./test/circle_example_expected.png)
 
 ![line](./test/line_example_expected.png)
 
 ![triangle](./test/test_fill_triangle_expected.png)
-
-![text](./test/text_example_expected.png)
 
 
 ## Quick Start
