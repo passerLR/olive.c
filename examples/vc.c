@@ -196,8 +196,8 @@ int main(void)
         }
 
         usleep(1000*1000/60);
-        printf("\033[%ldA", scaled_down_height);
-        printf("\033[%ldD", scaled_down_width);
+        printf("\033[%lldA", scaled_down_height);
+        printf("\033[%lldD", scaled_down_width);
         // printf("\x1b[H");
     }
     return 0;

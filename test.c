@@ -133,15 +133,19 @@ static inline size_t max_size(size_t a, size_t b)
 
 Replay_Result run_test_case(const char *program_path, const Test_Case *tc)
 {
+    printf("%s:", tc->id);
+    fflush(stdout);
+    
     const char *expected_file_path = tc->expected_file_path;
     const char *actual_file_path = tc->actual_file_path;
     const char *diff_file_path = tc->diff_file_path;
     Olivec_Canvas act_oc = tc->generate_actual_canvas();
     Olivec_Canvas ext_oc;
     if (!canvas_load(expected_file_path, &ext_oc)) {
-        fprintf(stderr, "%s: ERROR: could not read %s: %s\n", tc->id, expected_file_path, stbi_failure_reason());
+        fprintf(stderr, "\n");
+        fprintf(stderr, "  ERROR: could not read %s: %s\n", expected_file_path, stbi_failure_reason());
         if (errno == ENOENT) {
-            fprintf(stderr, "%s: HINT: Consider running `$ %s update` to create it\n", tc->id, program_path);
+            fprintf(stderr, "  HINT: Consider running `$ %s update %s` to create it\n", program_path, tc->id);
         }
         return(REPLAY_ERRORED);
     }
@@ -168,22 +172,23 @@ Replay_Result run_test_case(const char *program_path, const Test_Case *tc)
     }
 
     if (failed) {
+        fprintf(stderr, "\n");
         if (!canvas_save(act_oc, actual_file_path)) {
-            fprintf(stderr, "ERROR: could not write actual image file %s: %s\n", actual_file_path, strerror(errno));
+            fprintf(stderr, "  ERROR: could not write image file with actual pixels %s: %s\n", actual_file_path, strerror(errno));
             return(REPLAY_ERRORED);
         }
         if (!canvas_save(diff_canvas, diff_file_path)) {
-            fprintf(stderr, "ERROR: could not write diff image file %s: %s\n", diff_file_path, strerror(errno));
+            fprintf(stderr, "  ERROR: could not wrilte diff image file %s: %s\n", diff_file_path, strerror(errno));
             return(REPLAY_ERRORED);
         }
-        fprintf(stderr, "%s: TEST FAILURE: unexpected pixels in generated image\n", tc->id);
-        fprintf(stderr, "%s:   Expected: %s\n", tc->id, expected_file_path);
-        fprintf(stderr, "%s:   Actual:   %s\n", tc->id, actual_file_path);
-        fprintf(stderr, "%s:   Diff:     %s\n", tc->id, diff_file_path);
-        fprintf(stderr, "%s: HINT: If this behaviour is intentional confirm that by updating the image with `$ %s update`\n", tc->id, program_path);
+        fprintf(stderr, "  TEST FAILURE: unexpected pixels in generated image\n");
+        fprintf(stderr, "  Expected:     %s\n", expected_file_path);
+        fprintf(stderr, "  Actual:       %s\n", actual_file_path);
+        fprintf(stderr, "  Diff:         %s\n", diff_file_path);
+        fprintf(stderr, "  HINT: If this behaviour is intentional confirm that by updating the image with `$ %s update`\n", program_path);
         return(REPLAY_FAILED);
     }
-    printf("%s: OK\n", tc->id);
+    printf(" OK\n");
 
     return(REPLAY_PASSED);
 
@@ -277,10 +282,10 @@ Olivec_Canvas test_alpha_blending(void)
 
 Olivec_Canvas checker_example(void)
 {
-    int width  = 800;
-    int height = 600;
-    int cols = (8*2);
-    int rows = (6*2);
+    int width  = 400;
+    int height = 300;
+    int cols = (8);
+    int rows = (6);
     int cell_width = (width/cols);
     int cell_height = (height/rows);
     Olivec_Canvas oc = canvas_alloc(width, height);
@@ -302,10 +307,10 @@ Olivec_Canvas checker_example(void)
 
 Olivec_Canvas circle_example(void)
 {
-    int width  = 800;
-    int height = 600;
-    int cols = (8*2);
-    int rows = (6*2);
+    int width  = 400;
+    int height = 300;
+    int cols = (8);
+    int rows = (6);
     int cell_width = (width/cols);
     int cell_height = (height/rows);
     Olivec_Canvas oc = canvas_alloc(width, height);
@@ -323,8 +328,8 @@ Olivec_Canvas circle_example(void)
 
 Olivec_Canvas line_example(void)
 {
-    int width  = 800;
-    int height = 600;
+    int width  = 400;
+    int height = 300;
     Olivec_Canvas oc = canvas_alloc(width, height);
     olivec_fill(oc, BACKGROUND_COLOR);
     olivec_draw_line(oc, 0, 0, width, height, FOREGROUND_COLOR);
@@ -357,9 +362,21 @@ Olivec_Canvas text_example(void)
     return oc;
 }
 
+Olivec_Canvas test_hello_world(void)
+{
+    int width  = 400;
+    int height = 160;
+    Olivec_Canvas oc = canvas_alloc(width, height);
+    olivec_fill(oc, BACKGROUND_COLOR);
+    const char text[] = "Hello World!";
+    size_t glyph_size = 4;
+    olivec_text(oc, text, default_font, width/2 - 6*(default_font.width + default_font.interval)*glyph_size, height/2 - default_font.height*glyph_size/2, glyph_size, 0xFFFFFFFF);
+    return oc;
+}
+
 Olivec_Canvas kun_example(void)
 {
-    const char *filepath = "./assets/pig.png";
+    const char *filepath = "./assets/kun.png";
     int x, y, n;
     uint32_t *data = (uint32_t *)stbi_load(filepath, &x, &y, &n, 4);
     if (data == NULL) {
@@ -371,8 +388,8 @@ Olivec_Canvas kun_example(void)
     size_t width  = 128;
     size_t height = 128;
     Olivec_Canvas oc = canvas_alloc(width, height);
-    olivec_fill(oc, 0xFF1818FF);
-    olivec_copy(
+    olivec_fill(oc, BACKGROUND_COLOR);
+    olivec_sprite_copy(
         oc,
         olivec_canvas(data, x, y, x),
         0, 0, width, height);
@@ -439,6 +456,47 @@ Olivec_Canvas test_frame(void)
     return oc;
 }
 
+#include "./assets/ppng.c"
+Olivec_Canvas test_copy_flip(void)
+{
+    size_t width = 128;
+    size_t height = 128;
+    Olivec_Canvas dst = canvas_alloc(width, height);
+    Olivec_Canvas src = olivec_canvas(png_pixels, png_width, png_height, png_width);
+    olivec_fill(dst, RED_COLOR);
+    olivec_sprite_copy(dst, src, 0, 0, width/2, height/2);
+    olivec_sprite_copy(dst, src, width - 1, 0, -width/2, height/2);
+    olivec_sprite_copy(dst, src, 0, height - 1, width/2, -height/2);
+    olivec_sprite_copy(dst, src, width - 1, height - 1, -width/2, -height/2);
+    return dst;
+}
+Olivec_Canvas test_copy_flip_cut(void)
+{
+    size_t width = 128;
+    size_t height = 128;
+    Olivec_Canvas dst = canvas_alloc(width, height);
+    Olivec_Canvas src = olivec_canvas(png_pixels, png_width, png_height, png_width);
+    olivec_fill(dst, RED_COLOR);
+    olivec_sprite_copy(dst, src, -width/2, -height/2, width, height);
+    olivec_sprite_copy(dst, src, width - 1 + width/2, -height/2, -width, height);
+    olivec_sprite_copy(dst, src, -width/2, height - 1 + height/2, width, -height);
+    olivec_sprite_copy(dst, src, width - 1 + width/2, height - 1 + height/2, -width, -height);
+    return dst;
+}
+
+#include "./assets/kun.c"
+Olivec_Canvas test_sprite_blend_vs_copy(void)
+{
+    Olivec_Canvas sadge = olivec_canvas(kun_pixels, kun_width, kun_height, kun_width);
+    size_t w = sadge.width;
+    size_t h = sadge.height*2;
+    Olivec_Canvas dst = canvas_alloc(w, h);
+    olivec_fill(dst, RED_COLOR);
+    olivec_sprite_blend(dst, sadge, 0, 0, sadge.width, sadge.height);
+    olivec_sprite_copy(dst, sadge, 0, sadge.height, sadge.width, sadge.height);
+    return dst;
+}
+
 Test_Case test_cases[] = {
     DEFINE_TEST_CASE(test_fill_rect),
     DEFINE_TEST_CASE(test_fill_circle),
@@ -449,9 +507,13 @@ Test_Case test_cases[] = {
     DEFINE_TEST_CASE(circle_example),
     DEFINE_TEST_CASE(line_example),
     DEFINE_TEST_CASE(text_example),
+    DEFINE_TEST_CASE(test_hello_world),
     DEFINE_TEST_CASE(kun_example),
     DEFINE_TEST_CASE(test_line_edge_cases),
     DEFINE_TEST_CASE(test_frame),
+    DEFINE_TEST_CASE(test_copy_flip),
+    DEFINE_TEST_CASE(test_copy_flip_cut),
+    DEFINE_TEST_CASE(test_sprite_blend_vs_copy),
 };
 
 #define TEST_CASES_COUNT (sizeof(test_cases)/sizeof(test_cases[0]))

@@ -18,7 +18,8 @@ gcc $COMMON_CFLAGS -o ./bin/test  test.c -lm
 
 gcc $COMMON_CFLAGS -o ./bin/png2c png2c.c -lm
 # mkdir -p ./build/assets/
-./bin/png2c ./assets/tsodinPog.png ./assets/kun.c
+./bin/png2c ./assets/tsodinPog.png -o ./assets/ppng.c
+./bin/png2c -n kun -o ./assets/kun.c ./assets/kun.png
 
 build_vc_example triangle &
 build_vc_example rotating_3d &

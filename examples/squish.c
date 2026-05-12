@@ -1,7 +1,7 @@
 #define SCALE_DOWN_FACTOR 10
 #include "vc.c"
 
-#include "./assets/kun.c"
+#include "./assets/ppng.c"
 
 #define WIDTH 800
 #define HEIGHT 600
@@ -26,9 +26,9 @@ Olivec_Canvas render(float dt)
     int w = png_width*SRC_SCALE - t*factor;
     int h = png_height*SRC_SCALE + t*factor;
 
-    olivec_copy(
+    olivec_sprite_copy(
         dst_canvas,
-        olivec_canvas(png, png_width, png_height, png_width),
+        olivec_canvas(png_pixels, png_width, png_height, png_width),
         WIDTH/2 - w/2, HEIGHT - h, w, h);
 
     return dst_canvas;
