@@ -62,46 +62,99 @@ static void *context_realloc(void *oldp, size_t oldsz, size_t newsz)
 
 #define TEST_DIR_PATH "./test"
 
-bool record_test_case(Olivec_Canvas oc, const char *file_path)
+bool canvas_load(const char *file_path, Olivec_Canvas *oc)
 {
-    if (!stbi_write_png(file_path, oc.width, oc.height, 4, oc.pixels, sizeof(uint32_t)*oc.stride)) {
+    int width, height;
+    uint32_t *pixels = (uint32_t*) stbi_load(file_path, &width, &height, NULL, 4);
+    if (pixels == NULL) return false;
+    *oc = olivec_canvas(pixels, width, height, width);
+    return true;
+}
+
+bool canvas_save(Olivec_Canvas oc, const char *file_path)
+{
+    return stbi_write_png(file_path, oc.width, oc.height, 4, oc.pixels, sizeof(uint32_t)*oc.stride);
+}
+
+typedef struct {
+    Olivec_Canvas (*generate_actual_canvas)(void);
+    const char *id;
+    const char *expected_file_path;
+    const char *actual_file_path;
+    const char *diff_file_path;
+} Test_Case;
+
+#define DEFINE_TEST_CASE(name) \
+    { \
+        .generate_actual_canvas = name, \
+        .id = #name, \
+        .expected_file_path = TEST_DIR_PATH "/" #name "_expected.png", \
+        .actual_file_path = TEST_DIR_PATH "/" #name "_actual.png", \
+        .diff_file_path = TEST_DIR_PATH "/" #name "_diff.png", \
+    }
+
+bool update_test_case(const Test_Case *tc)
+{
+    Olivec_Canvas oc = tc->generate_actual_canvas();
+    const char *file_path = tc->expected_file_path;
+
+    if (!canvas_save(oc, file_path)) {
         fprintf(stderr, "ERROR: could not write file %s: %s\n", file_path, strerror(errno));
         return(false);
     }
-    printf("Generated %s\n", file_path);
+    printf("%s: Generated %s\n", tc->id, file_path);
     return(true);
 }
+
+Olivec_Canvas canvas_alloc(size_t width, size_t height)
+{
+    uint32_t *pixels = context_alloc(sizeof(uint32_t)*width*height);
+    return olivec_canvas(pixels, width, height, width);
+}
+
 typedef enum {
     REPLAY_PASSED,
     REPLAY_FAILED,
     REPLAY_ERRORED,
 } Replay_Result;
 
-Replay_Result replay_test_case(const char *program_path, Olivec_Canvas act_oc, const char *expected_file_path, const char *actual_file_path, const char *diff_file_path)
+static inline size_t min_size(size_t a, size_t b)
 {
-    int expected_width, expected_height;
-    uint32_t *expected_pixels = (uint32_t*) stbi_load(expected_file_path, &expected_width, &expected_height, NULL, 4);
-    if (expected_pixels == NULL) {
-        fprintf(stderr, "%s: ERROR: could not read the file: %s\n", expected_file_path, strerror(errno));
+    if (a < b) return a;
+    return b;
+}
+
+static inline size_t max_size(size_t a, size_t b)
+{
+    if (a > b) return a;
+    return b;
+}
+
+Replay_Result run_test_case(const char *program_path, const Test_Case *tc)
+{
+    const char *expected_file_path = tc->expected_file_path;
+    const char *actual_file_path = tc->actual_file_path;
+    const char *diff_file_path = tc->diff_file_path;
+    Olivec_Canvas act_oc = tc->generate_actual_canvas();
+    Olivec_Canvas ext_oc;
+    if (!canvas_load(expected_file_path, &ext_oc)) {
+        fprintf(stderr, "%s: ERROR: could not read %s: %s\n", tc->id, expected_file_path, stbi_failure_reason());
         if (errno == ENOENT) {
-            fprintf(stderr, "%s: HINT: Consider running `$ %s record` to create it\n", expected_file_path, program_path);
+            fprintf(stderr, "%s: HINT: Consider running `$ %s update` to create it\n", tc->id, program_path);
         }
         return(REPLAY_ERRORED);
     }
 
-    Olivec_Canvas ext_oc = olivec_canvas(expected_pixels, expected_width, expected_height, expected_width);
-
-     if (ext_oc.width != act_oc.width || ext_oc.height != act_oc.height) {
-        fprintf(stderr, "%s: TEST FAILURE: unexpected image size. Expected %dx%d, but got %zux%zu\n", expected_file_path, expected_width, expected_height, act_oc.width, act_oc.height);
-        return(REPLAY_FAILED);
+    bool failed = false;
+    if (ext_oc.width != act_oc.width || ext_oc.height != act_oc.height) {
+        failed = true;
     }
 
-    uint32_t *diff_pixels = context_alloc(sizeof(uint32_t)*act_oc.width*act_oc.height);
-    Olivec_Canvas diff_canvas = olivec_canvas(diff_pixels, act_oc.width, act_oc.height, act_oc.width);
+    Olivec_Canvas diff_canvas = canvas_alloc(max_size(ext_oc.width, act_oc.width), max_size(ext_oc.height, act_oc.height));
+    olivec_fill(diff_canvas, ERROR_COLOR);
 
-    bool failed = false;
-    for (size_t y = 0; y < act_oc.height; ++y) {
-        for (size_t x = 0; x < act_oc.width; ++x) {
+    for (size_t y = 0; y < min_size(ext_oc.height, act_oc.height); ++y) {
+        for (size_t x = 0; x < min_size(ext_oc.width, act_oc.width); ++x) {
             uint32_t expected_pixel = OLIVEC_PIXEL(ext_oc, x, y);
             uint32_t actual_pixel = OLIVEC_PIXEL(act_oc, x, y);
             if (expected_pixel != actual_pixel) {
@@ -114,41 +167,26 @@ Replay_Result replay_test_case(const char *program_path, Olivec_Canvas act_oc, c
     }
 
     if (failed) {
-        fprintf(stderr, "%s: TEST FAILURE: unexpected pixels in generated image\n", expected_file_path);
-        if (!stbi_write_png(actual_file_path, act_oc.width, act_oc.height, 4, act_oc.pixels, sizeof(uint32_t)*act_oc.stride)) {
+        if (!canvas_save(act_oc, actual_file_path)) {
             fprintf(stderr, "ERROR: could not write actual image file %s: %s\n", actual_file_path, strerror(errno));
             return(REPLAY_ERRORED);
         }
-        if (!stbi_write_png(diff_file_path, diff_canvas.width, diff_canvas.height, 4, diff_canvas.pixels, sizeof(uint32_t)*diff_canvas.stride)) {
+        if (!canvas_save(diff_canvas, diff_file_path)) {
             fprintf(stderr, "ERROR: could not write diff image file %s: %s\n", diff_file_path, strerror(errno));
             return(REPLAY_ERRORED);
         }
-        fprintf(stderr, "%s: HINT: See actual image %s\n", expected_file_path, actual_file_path);
-        fprintf(stderr, "%s: HINT: See diff image %s\n", expected_file_path, diff_file_path);
-        fprintf(stderr, "%s: HINT: If this behaviour is intentional confirm that by updating the image with `$ %s record`\n", expected_file_path, program_path);
+        fprintf(stderr, "%s: TEST FAILURE: unexpected pixels in generated image\n", tc->id);
+        fprintf(stderr, "%s:   Expected: %s\n", tc->id, expected_file_path);
+        fprintf(stderr, "%s:   Actual:   %s\n", tc->id, actual_file_path);
+        fprintf(stderr, "%s:   Diff:     %s\n", tc->id, diff_file_path);
+        fprintf(stderr, "%s: HINT: If this behaviour is intentional confirm that by updating the image with `$ %s update`\n", tc->id, program_path);
         return(REPLAY_FAILED);
     }
-    printf("%s OK\n", expected_file_path);
+    printf("%s: OK\n", tc->id);
 
     return(REPLAY_PASSED);
 
 }
-
-
-typedef struct {
-    Olivec_Canvas (*generate_actual_canvas)(void);
-    const char *expected_file_path;
-    const char *actual_file_path;
-    const char *diff_file_path;
-} Test_Case;
-
-#define DEFINE_TEST_CASE(name) \
-    { \
-        .generate_actual_canvas = name, \
-        .expected_file_path = TEST_DIR_PATH "/" #name "_expected.png", \
-        .actual_file_path = TEST_DIR_PATH "/" #name "_actual.png", \
-        .diff_file_path = TEST_DIR_PATH "/" #name "_diff.png", \
-    }
 
 
 #define WIDTH 128
@@ -156,8 +194,7 @@ typedef struct {
 
 Olivec_Canvas test_fill_rect(void)
 {
-    uint32_t *pixels = context_alloc(WIDTH*HEIGHT*sizeof(uint32_t));
-    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT, WIDTH);
+    Olivec_Canvas oc = canvas_alloc(WIDTH, HEIGHT);
     olivec_fill(oc, BACKGROUND_COLOR);
     olivec_fill_rect(oc, WIDTH/2 - WIDTH/8, HEIGHT/2 - HEIGHT/8, WIDTH/4, HEIGHT/4, RED_COLOR);
     olivec_fill_rect(oc, WIDTH - 1, HEIGHT - 1, -WIDTH/2, -HEIGHT/2, GREEN_COLOR);
@@ -168,8 +205,7 @@ Olivec_Canvas test_fill_rect(void)
 
 Olivec_Canvas test_fill_circle(void)
 {
-    uint32_t *pixels = context_alloc(WIDTH*HEIGHT*sizeof(uint32_t));
-    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT, WIDTH);
+    Olivec_Canvas oc = canvas_alloc(WIDTH, HEIGHT);
     olivec_fill(oc, BACKGROUND_COLOR);
     olivec_fill_circle(oc, 0, 0, WIDTH/2, RED_COLOR);
     olivec_fill_circle(oc, WIDTH/2, HEIGHT/2, WIDTH/4, BLUE_COLOR);
@@ -180,8 +216,7 @@ Olivec_Canvas test_fill_circle(void)
 
 Olivec_Canvas test_draw_line(void)
 {
-    uint32_t *pixels = context_alloc(WIDTH*HEIGHT*sizeof(uint32_t));
-    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT, WIDTH);
+    Olivec_Canvas oc = canvas_alloc(WIDTH, HEIGHT);
     olivec_fill(oc, BACKGROUND_COLOR);
     olivec_draw_line(oc, 0, 0, WIDTH, HEIGHT, RED_COLOR);
     olivec_draw_line(oc, WIDTH, 0, 0, HEIGHT, GREEN_COLOR);
@@ -191,8 +226,7 @@ Olivec_Canvas test_draw_line(void)
 
 Olivec_Canvas test_fill_triangle(void)
 {
-    uint32_t *pixels = context_alloc(WIDTH*HEIGHT*sizeof(uint32_t));
-    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT, WIDTH);
+    Olivec_Canvas oc = canvas_alloc(WIDTH, HEIGHT);
     olivec_fill(oc, BACKGROUND_COLOR);
     {
         int x1 = WIDTH/2, y1 = HEIGHT/8;
@@ -225,8 +259,7 @@ Olivec_Canvas test_fill_triangle(void)
 
 Olivec_Canvas test_alpha_blending(void)
 {
-    uint32_t *pixels = context_alloc(WIDTH*HEIGHT*sizeof(uint32_t));
-    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT, WIDTH);
+    Olivec_Canvas oc = canvas_alloc(WIDTH, HEIGHT);
     olivec_fill(oc, BACKGROUND_COLOR);
     olivec_fill_rect(oc, 0, 0, WIDTH*3/4, HEIGHT*3/4, RED_COLOR);
     olivec_fill_rect(oc, WIDTH - 1, HEIGHT - 1, -WIDTH*3/4, -HEIGHT*3/4, 0x7720AA20);
@@ -249,8 +282,7 @@ Olivec_Canvas checker_example(void)
     int rows = (6*2);
     int cell_width = (width/cols);
     int cell_height = (height/rows);
-    uint32_t *pixels = context_alloc(width*height*sizeof(uint32_t));
-    Olivec_Canvas oc = olivec_canvas(pixels, width, height, width);
+    Olivec_Canvas oc = canvas_alloc(width, height);
     olivec_fill(oc, BACKGROUND_COLOR);
 
     for (int y = 0; y < rows; y++) {
@@ -275,8 +307,7 @@ Olivec_Canvas circle_example(void)
     int rows = (6*2);
     int cell_width = (width/cols);
     int cell_height = (height/rows);
-    uint32_t *pixels = context_alloc(width*height*sizeof(uint32_t));
-    Olivec_Canvas oc = olivec_canvas(pixels, width, height, width);
+    Olivec_Canvas oc = canvas_alloc(width, height);
     olivec_fill(oc, BACKGROUND_COLOR);
 
     int radius = cell_width < cell_height ? cell_width : cell_height;
@@ -293,8 +324,7 @@ Olivec_Canvas line_example(void)
 {
     int width  = 800;
     int height = 600;
-    uint32_t *pixels = context_alloc(width*height*sizeof(uint32_t));
-    Olivec_Canvas oc = olivec_canvas(pixels, width, height, width);
+    Olivec_Canvas oc = canvas_alloc(width, height);
     olivec_fill(oc, BACKGROUND_COLOR);
     olivec_draw_line(oc, 0, 0, width, height, FOREGROUND_COLOR);
     olivec_draw_line(oc, width, 0, 0, height, FOREGROUND_COLOR);
@@ -309,8 +339,7 @@ Olivec_Canvas text_example(void)
 {
     int width  = 800;
     int height = 600;
-    uint32_t *pixels = context_alloc(width*height*sizeof(uint32_t));
-    Olivec_Canvas oc = olivec_canvas(pixels, width, height, width);
+    Olivec_Canvas oc = canvas_alloc(width, height);
     olivec_fill(oc, BACKGROUND_COLOR);
     const char text[] = "the quick brown fox jumps over the lazy dog.";
     const char lowercase[] = "abcdefghijklmnopqrstuvwxyz";
@@ -336,7 +365,7 @@ Olivec_Canvas kun_example(void)
         fprintf(stderr, "Could not load file `%s`: %s\n", filepath, strerror(errno));
         return olivec_canvas(NULL, 0, 0, 0);
     }
-    printf("%d, %d, %d\n", x, y, n);
+    // printf("%d, %d, %d\n", x, y, n);
 
     int width  = 800;
     int height = 600;
@@ -349,6 +378,20 @@ Olivec_Canvas kun_example(void)
     return oc;
 }
 
+Olivec_Canvas test_line_edge_cases(void)
+{
+    size_t width = 10;
+    size_t height = 10;
+    Olivec_Canvas oc = canvas_alloc(width, height);
+    olivec_fill(oc, BACKGROUND_COLOR);
+    // One pixel line
+    olivec_draw_line(oc, width/2, height/2, width/2, height/2, FOREGROUND_COLOR);
+    // Out-of-bounds horizontally
+    olivec_draw_line(oc, width + 10, height/2, width + 20, height/2, FOREGROUND_COLOR);
+    // Out-of-bounds vertically
+    olivec_draw_line(oc, width/2, height + 10, width/2, height + 20, FOREGROUND_COLOR);
+    return oc;
+}
 
 Test_Case test_cases[] = {
     DEFINE_TEST_CASE(test_fill_rect),
@@ -361,25 +404,174 @@ Test_Case test_cases[] = {
     DEFINE_TEST_CASE(line_example),
     DEFINE_TEST_CASE(text_example),
     DEFINE_TEST_CASE(kun_example),
+    DEFINE_TEST_CASE(test_line_edge_cases),
 };
 
 #define TEST_CASES_COUNT (sizeof(test_cases)/sizeof(test_cases[0]))
 
+const char *shift(int *argc, char ***argv)
+{
+    assert(*argc > 0);
+    const char *result = *argv[0];
+    *argc -= 1;
+    *argv += 1;
+    return result;
+}
+
+void list_available_tests(void)
+{
+    fprintf(stderr, "Available tests:\n");
+    for (size_t i = 0; i < TEST_CASES_COUNT; ++i) {
+        fprintf(stderr, "    %s\n", test_cases[i].id);
+    }
+}
+
+Test_Case *find_test_case_by_id(const char *id)
+{
+    for (size_t i = 0; i < TEST_CASES_COUNT; ++i) {
+        if (strcmp(test_cases[i].id, id) == 0) {
+            return &test_cases[i];
+        }
+    }
+    return NULL;
+}
+
+typedef struct {
+    int (*run)(const char *program_path, int argc, char **argv);
+    const char *id;
+    const char *description;
+} Subcmd;
+
+void usage(const char *program_path);
+
+int subcmd_run(const char *program_path, int argc, char **argv)
+{
+    if (argc <= 0) {
+        for (size_t i = 0; i < TEST_CASES_COUNT; ++i) {
+            if (run_test_case(program_path, &test_cases[i]) == REPLAY_ERRORED) return(1);
+            arena_reset(&default_arena);
+        }
+    } else {
+        const char *test_case_id = shift(&argc, &argv);
+        Test_Case *tc = find_test_case_by_id(test_case_id);
+        if (tc == NULL) {
+            list_available_tests();
+            fprintf(stderr, "ERROR: could not find test case `%s`\n", test_case_id);
+            return(1);
+        }
+
+        if (run_test_case(program_path, tc) == REPLAY_ERRORED) return(1);
+    }
+
+    return 0;
+}
+
+int subcmd_update(const char *program_path, int argc, char **argv)
+{
+    UNUSED(program_path);
+
+    if (argc <= 0) {
+        for (size_t i = 0; i < TEST_CASES_COUNT; ++i) {
+            if (!update_test_case(&test_cases[i])) return(1);
+            arena_reset(&default_arena);
+        }
+    } else {
+        const char *test_case_id = shift(&argc, &argv);
+        Test_Case *tc = find_test_case_by_id(test_case_id);
+        if (tc == NULL) {
+            list_available_tests();
+            fprintf(stderr, "ERROR: could not find test case `%s`\n", test_case_id);
+            return(1);
+        }
+
+        if (!update_test_case(tc)) return(1);
+    }
+
+    return 0;
+}
+
+int subcmd_list(const char *program_path, int argc, char **argv)
+{
+    UNUSED(program_path);
+    UNUSED(argc);
+    UNUSED(argv);
+    list_available_tests();
+    return 0;
+}
+
+int subcmd_help(const char *program_path, int argc, char **argv)
+{
+    UNUSED(argc);
+    UNUSED(argv);
+    usage(program_path);
+    return 0;
+}
+
+#define DEFINE_SUBCMD(name, desc) \
+    { \
+        .run = subcmd_##name, \
+        .id = #name, \
+        .description = desc, \
+    }
+
+Subcmd subcmds[] = {
+    DEFINE_SUBCMD(run, "Run the tests"),
+    DEFINE_SUBCMD(update, "Update the tests"),
+    DEFINE_SUBCMD(list, "List all available tests"),
+    DEFINE_SUBCMD(help, "Print this help message"),
+};
+
+#define SUBCMDS_COUNT (sizeof(subcmds)/sizeof(subcmds[0]))
+
+Subcmd *find_subcmd_by_id(const char *id)
+{
+    for (size_t i = 0; i < SUBCMDS_COUNT; ++i) {
+        if (strcmp(subcmds[i].id, id) == 0) {
+            return &subcmds[i];
+        }
+    }
+    return NULL;
+}
+
+void usage(const char *program_path)
+{
+    fprintf(stderr, "Usage: %s [Subcommand]\n", program_path);
+    fprintf(stderr, "Subcommands:\n");
+
+    int width = 0;
+    for (size_t i = 0; i < SUBCMDS_COUNT; ++i) {
+        int len = strlen(subcmds[i].id);
+        if (width < len) width = len;
+    }
+
+    for (size_t i = 0; i < SUBCMDS_COUNT; ++i) {
+        fprintf(stderr, "    %-*s - %s\n", width, subcmds[i].id, subcmds[i].description);
+    }
+}
+
+
 int main(int argc, char **argv)
 {
     int result = 0;
-    assert(argc >= 1);
-    const char *program_path = argv[0];
-    bool record = argc >= 2 && strcmp(argv[1], "record") == 0;
 
-    for (size_t i = 0; i < TEST_CASES_COUNT; ++i) {
-        Olivec_Canvas actual_canvas = test_cases[i].generate_actual_canvas();
-        if (record) {
-            if (!record_test_case(actual_canvas, test_cases[i].expected_file_path)) return_defer(1);
-        } else {
-            if (replay_test_case(program_path, actual_canvas, test_cases[i].expected_file_path, test_cases[i].actual_file_path, test_cases[i].diff_file_path) == REPLAY_ERRORED) return_defer(1);
+    {
+        const char *program_path = shift(&argc,  &argv);
+
+        if (argc <= 0) {
+            usage(program_path);
+            fprintf(stderr, "ERROR: no subcommand is provided\n");
+            return_defer(1);
         }
-        arena_reset(&default_arena);
+
+        const char *subcmd_id = shift(&argc, &argv);
+        Subcmd *subcmd = find_subcmd_by_id(subcmd_id);
+        if (subcmd != NULL) {
+            return_defer(subcmd->run(program_path, argc, argv));
+        } else {
+            usage(program_path);
+            fprintf(stderr, "ERROR: unknown subcommand `%s`\n", subcmd_id);
+            return_defer(1);
+        }
     }
 
 defer:
