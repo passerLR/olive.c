@@ -6,10 +6,6 @@
 #define SCALE_DOWN_FACTOR 10
 #include "vc.c"
 
-float sinf(float x);
-float cosf(float x);
-#define PI 3.14159265359
-
 #define WIDTH 800
 #define HEIGHT 600
 #define BACKGROUND_COLOR 0xFF181818
@@ -22,16 +18,6 @@ float cosf(float x);
 #define Z_OFFSET 0.5
 
 static uint32_t pixels[WIDTH*HEIGHT];
-
-// TODO: Specify the origin, axis, and angle to achieve spatial rotation
-static inline void rotate_point(float *x, float *y, float cx, float cy, float beta)
-{
-    float xt = *x - cx;
-    float yt = *y - cy;
-
-    *x = cosf(beta)*xt - sinf(beta)*yt + cx;
-    *y = sinf(beta)*xt + cosf(beta)*yt + cy;
-}
 
 float theta = 0;
 

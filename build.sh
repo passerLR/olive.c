@@ -25,4 +25,5 @@ build_vc_example triangle &
 build_vc_example rotating_3d &
 build_vc_example squish &
 build_vc_example triangle_3d &
+build_vc_example triangle_texture &
 wait
