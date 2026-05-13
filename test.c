@@ -496,7 +496,15 @@ Olivec_Canvas test_sprite_blend_vs_copy(void)
     olivec_sprite_copy(dst, sadge, 0, sadge.height, sadge.width, sadge.height);
     return dst;
 }
-
+Olivec_Canvas test_weird_triangle_bug(void)
+{
+    size_t w = 256;
+    size_t h = 256;
+    Olivec_Canvas dst = canvas_alloc(w, h);
+    olivec_fill(dst, 0xFF181818);
+    olivec_fill_triangle3c(dst, w/4, h/4, w/2, 0, 0, h, 0xFF0000FF, 0xFF00FF00, 0xFFFF0000);
+    return dst;
+}
 Test_Case test_cases[] = {
     DEFINE_TEST_CASE(test_fill_rect),
     DEFINE_TEST_CASE(test_fill_circle),
@@ -514,6 +522,7 @@ Test_Case test_cases[] = {
     DEFINE_TEST_CASE(test_copy_flip),
     DEFINE_TEST_CASE(test_copy_flip_cut),
     DEFINE_TEST_CASE(test_sprite_blend_vs_copy),
+    DEFINE_TEST_CASE(test_weird_triangle_bug),
 };
 
 #define TEST_CASES_COUNT (sizeof(test_cases)/sizeof(test_cases[0]))

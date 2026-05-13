@@ -16,6 +16,8 @@ build_vc_example() {
 mkdir -p ./bin/
 gcc $COMMON_CFLAGS -o ./bin/test  test.c -lm
 
+gcc $COMMON_CFLAGS -o ./bin/viewobj  viewobj.c -lm
+
 gcc $COMMON_CFLAGS -o ./bin/png2c png2c.c -lm
 # mkdir -p ./build/assets/
 ./bin/png2c ./assets/tsodinPog.png -o ./assets/ppng.c

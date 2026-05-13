@@ -69,7 +69,7 @@ int main(void)
             SDL_Rect window_rect = {0, 0, actual_width, actual_height};
             if (SDL_LockTexture(texture, &window_rect, &pixels_dst, &pitch) < 0) return_defer(1);
             for (size_t y = 0; y < actual_height; ++y) {
-                memcpy(pixels_dst + y*pitch, oc_src.pixels + y*actual_width, actual_width*sizeof(uint32_t));
+                memcpy((char*)pixels_dst + y*pitch, oc_src.pixels + y*actual_width, actual_width*sizeof(uint32_t));
             }
             SDL_UnlockTexture(texture);
 
@@ -174,8 +174,7 @@ void compress_pixels(Olivec_Canvas oc)
     }
     for (size_t y = 0; y < scaled_down_height; ++y) {
         for (size_t x = 0; x < scaled_down_width; ++x) {
-            Olivec_Canvas soc = olivec_subcanvas(oc, x*SCALE_DOWN_FACTOR, y*SCALE_DOWN_FACTOR, SCALE_DOWN_FACTOR, 
-SCALE_DOWN_FACTOR);
+            Olivec_Canvas soc = olivec_subcanvas(oc, x*SCALE_DOWN_FACTOR, y*SCALE_DOWN_FACTOR, SCALE_DOWN_FACTOR, SCALE_DOWN_FACTOR);
             char_canvas[y*scaled_down_width + x] = color_to_char(compress_pixels_chunk(soc));
         }
     }
