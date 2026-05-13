@@ -52,7 +52,7 @@ Olivec_Canvas render(float dt)
         rotate_point(&x1, &y1);
         rotate_point(&x2, &y2);
         rotate_point(&x3, &y3);
-        olivec_fill_triangle3(oc, x1, y1, x2, y2, x3, y3, 0xFF2020AA, 0xFF20AA20, 0xFFAA2020);
+        olivec_fill_triangle3c(oc, x1, y1, x2, y2, x3, y3, 0xFF2020AA, 0xFF20AA20, 0xFFAA2020);
     }
 
     // Circle

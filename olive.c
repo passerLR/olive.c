@@ -46,8 +46,9 @@ OLIVECDEF void olivec_fill(Olivec_Canvas oc, uint32_t color);
 OLIVECDEF void olivec_fill_rect(Olivec_Canvas oc, int x, int y, int w, int h, uint32_t color);
 OLIVECDEF void olivec_frame(Olivec_Canvas oc, int x, int y, int w, int h, size_t t, uint32_t color);
 OLIVECDEF void olivec_fill_circle(Olivec_Canvas oc, int cx, int cy, int r, uint32_t color);
-OLIVECDEF void olivec_fill_triangle(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t color);
-OLIVECDEF void olivec_fill_triangle3(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t color1, uint32_t color2, uint32_t color3);
+OLIVECDEF void olivec_fill_triangle  (Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t color);
+OLIVECDEF void olivec_fill_triangle3c(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t c1, uint32_t c2, uint32_t c3);
+OLIVECDEF void olivec_fill_triangle3z(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, float z1, float z2, float z3);
 OLIVECDEF void olivec_draw_line(Olivec_Canvas oc, int x1, int y1, int x2, int y2, uint32_t color);
 OLIVECDEF void olivec_text(Olivec_Canvas oc, const char *text, Olivec_Font font, int x, int y, size_t size, uint32_t color);
 OLIVECDEF void olivec_sprite_copy (Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h);
@@ -316,22 +317,22 @@ uint32_t mix_color3(uint32_t c1, uint32_t c2, uint32_t c3, int u1, int u2, int d
     return OLIVEC_RGBA(r, g, b, a);
 }
 
-OLIVECDEF void olivec_fill_triangle3(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t color1, uint32_t color2, uint32_t color3)
+OLIVECDEF void olivec_fill_triangle3c(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t c1, uint32_t c2, uint32_t c3)
 {
     if (y1 > y2) {
         OLIVEC_SWAP(int, x1, x2);
         OLIVEC_SWAP(int, y1, y2);
-        OLIVEC_SWAP(uint32_t, color1, color2);
+        OLIVEC_SWAP(uint32_t, c1, c2);
     }
     if (y2 > y3) {
         OLIVEC_SWAP(int, x2, x3);
         OLIVEC_SWAP(int, y2, y3);
-        OLIVEC_SWAP(uint32_t, color2, color3);
+        OLIVEC_SWAP(uint32_t, c2, c3);
     }
     if (y1 > y2) {
         OLIVEC_SWAP(int, x1, x2);
         OLIVEC_SWAP(int, y1, y2);
-        OLIVEC_SWAP(uint32_t, color1, color2);
+        OLIVEC_SWAP(uint32_t, c1, c2);
     }
 
     int det = (x1 - x3)*(y2 - y3) - (x2 - x3)*(y1 - y3);
@@ -349,7 +350,7 @@ OLIVECDEF void olivec_fill_triangle3(Olivec_Canvas oc, int x1, int y1, int x2, i
                 if (0 <= x && x <= (int) oc.width) {
                     int u1 = (x - x3)*(y2 - y3) - (x2 - x3)*(y - y3);
                     int u2 = (x1 - x3)*(y - y3) - (x - x3)*(y1 - y3);
-                    int color = mix_color3(color1, color2, color3, u1, u2, det);
+                    int color = mix_color3(c1, c2, c3, u1, u2, det);
                     olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
                 }
             }
@@ -366,8 +367,66 @@ OLIVECDEF void olivec_fill_triangle3(Olivec_Canvas oc, int x1, int y1, int x2, i
                 if (0 <= x && x <= (int) oc.width) {
                     int u1 = (x - x3)*(y2 - y3) - (x2 - x3)*(y - y3);
                     int u2 = (x1 - x3)*(y - y3) - (x - x3)*(y1 - y3);
-                    int color = mix_color3(color1, color2, color3, u1, u2, det);
+                    int color = mix_color3(c1, c2, c3, u1, u2, det);
                     olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
+                }
+            }
+        }
+    }
+}
+
+OLIVECDEF void olivec_fill_triangle3z(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, float z1, float z2, float z3)
+{
+    if (y1 > y2) {
+        OLIVEC_SWAP(int, x1, x2);
+        OLIVEC_SWAP(int, y1, y2);
+        OLIVEC_SWAP(float, z1, z2);
+    }
+    if (y2 > y3) {
+        OLIVEC_SWAP(int, x2, x3);
+        OLIVEC_SWAP(int, y2, y3);
+        OLIVEC_SWAP(float, z2, z3);
+    }
+    if (y1 > y2) {
+        OLIVEC_SWAP(int, x1, x2);
+        OLIVEC_SWAP(int, y1, y2);
+        OLIVEC_SWAP(float, z1, z2);
+    }
+
+    int det = (x1 - x3)*(y2 - y3) - (x2 - x3)*(y1 - y3);
+
+    int dx12 = x2 - x1;
+    int dy12 = y2 - y1;
+    int dx13 = x3 - x1;
+    int dy13 = y3 - y1;
+    for (int y = y1; y <= y2; y++) {
+        if (0 <= y && y < (int) oc.height) {
+            int s1 = (dy12 != 0) ? (y - y1)*dx12/dy12 + x1 : x1;
+            int s2 = (dy13 != 0) ? (y - y1)*dx13/dy13 + x1 : x1;
+            if (s1 > s2) OLIVEC_SWAP(int, s1, s2);
+            for (int x = s1; x <= s2; x++) {
+                if (0 <= x && x <= (int) oc.width) {
+                    int u1 = (x - x3)*(y2 - y3) - (x2 - x3)*(y - y3);
+                    int u2 = (x1 - x3)*(y - y3) - (x - x3)*(y1 - y3);
+                    float z = z1*u1/det + z2*u2/det + z3*(det - u1 - u2)/det;
+                    *(float*)&OLIVEC_PIXEL(oc, x, y) = z;
+                }
+            }
+        }
+    }
+    int dx32 = x2 - x3;
+    int dy32 = y2 - y3;
+    for (int y = y2+1; y <= y3; y++) {
+        if (0 <= y && y < (int) oc.height) {
+            int s1 = (dy32 != 0) ? (y - y3)*dx32/dy32 + x3 : x3;
+            int s2 = (dy13 != 0) ? (y - y3)*dx13/dy13 + x3 : x3;
+            if (s1 > s2) OLIVEC_SWAP(int, s1, s2);
+            for (int x = s1; x <= s2; x++) {
+                if (0 <= x && x <= (int) oc.width) {
+                    int u1 = (x - x3)*(y2 - y3) - (x2 - x3)*(y - y3);
+                    int u2 = (x1 - x3)*(y - y3) - (x - x3)*(y1 - y3);
+                    float z = z1*u1/det + z2*u2/det + z3*(det - u1 - u2)/det;
+                    *(float*)&OLIVEC_PIXEL(oc, x, y) = z;
                 }
             }
         }
