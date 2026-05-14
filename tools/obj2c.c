@@ -1,20 +1,27 @@
-
 #include <stdio.h>
 #include <errno.h>
 #include <float.h>
 #include <limits.h>
+#include <string.h>
 
-#define OLIVEC_IMPLEMENTATION
-#include "olive.c"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+#define SV_IMPLEMENTATION
+#include "sv.h"
 
 #define ARENA_IMPLEMENTATION
 #include "arena.h"
 
-#define SV_IMPLEMENTATION
-#include "sv.h"
+#define return_defer(value) do { result = (value); goto defer; } while (0)
+typedef int Errno;
+#define UNUSED(x) (void)(x)
+
+const char *shift(int *argc, char ***argv)
+{
+    assert(*argc > 0);
+    const char *result = *argv[0];
+    *argc -= 1;
+    *argv += 1;
+    return result;
+}
 
 static Arena default_arena = {0};
 static Arena *context_arena = &default_arena;
@@ -30,16 +37,6 @@ static void *context_realloc(void *oldp, size_t oldsz, size_t newsz)
     if (newsz <= oldsz) return oldp;
     return memcpy(context_alloc(newsz), oldp, oldsz);
 }
-
-#define FACTOR 120
-#define WIDTH (16*FACTOR)
-#define HEIGHT (9*FACTOR)
-
-uint32_t pixels[WIDTH*HEIGHT] = {0};
-float zbuffer[WIDTH*HEIGHT] = {0};
-
-#define return_defer(value) do { result = (value); goto defer; } while (0)
-typedef int Errno;
 
 Errno read_entire_file(const char *file_path, char **buffer, size_t *buffer_size)
 {
@@ -90,16 +87,6 @@ Vector3 make_vector3(float x, float y, float z)
     return v3;
 }
 
-Vector2 project_3d_2d(Vector3 v3)
-{
-    return make_vector2(v3.x / v3.z, v3.y / v3.z);
-}
-
-Vector2 project_2d_scr(Vector2 v2)
-{
-    return make_vector2((v2.x + 1)/2*WIDTH, (1 - (v2.y + 1)/2)*HEIGHT);
-}
-
 typedef struct {
     Vector3 *items;
     size_t capacity;
@@ -145,31 +132,110 @@ typedef struct {
         (da)->items[(da)->count++] = (item);                                \
     } while (0)
 
-#define UNUSED(x) (void)(x)
-
-Vector3 remap_teapot(Vector3 v, float lx, float hx, float ly, float hy, float lz, float hz)
+void generate_code(FILE *out, Vertices vertices, Faces faces)
 {
-    v.z = (v.z - lz)/(hz - lz) + 1;
-    v.x = (v.x - lx)/(hx - lx)*2 - 1;
-    v.y = (v.y - ly)/(hy - ly)*2 - 1;
+    fprintf(out, "#ifndef OBJ_H_\n");
+    fprintf(out, "#define OBJ_H_\n");
+    fprintf(out, "#define vertices_count %zu\n", vertices.count);
+    fprintf(out, "static const float vertices[][3] = {\n");
+    for (size_t i = 0; i < vertices.count; ++i) {
+        Vector3 v = vertices.items[i];
+        fprintf(out, "    {%f, %f, %f},\n", v.x, v.y, v.z);
+    }
+    fprintf(out, "};\n");
+
+    fprintf(out, "static const int faces[%zu][3] = {\n", faces.count);
+    for (size_t i = 0; i < faces.count; ++i) {
+        Face f = faces.items[i];
+        fprintf(out, "    {%d, %d, %d},\n", f.a, f.b, f.c);
+    }
+    fprintf(out, "};\n");
+    fprintf(out, "#define faces_count %zu\n", faces.count);
+    fprintf(out, "#endif // OBJ_H_\n");
+}
+
+Vector3 remap_object(Vector3 v, float scale, float lx, float hx, float ly, float hy, float lz, float hz)
+{
+    float cx = lx + (hx - lx)/2;
+    float cy = ly + (hy - ly)/2;
+    float cz = lz + (hz - lz)/2;
+    v.z = (v.z - cz)*scale;
+    v.x = (v.x - cx)*scale;
+    v.y = (v.y - cy)*scale;
     return v;
+}
+
+void usage(const char *program_name)
+{
+    fprintf(stderr, "Usage: %s [OPTIONS] <INPUT.obj>\n", program_name);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "    -o    output file path\n");
+    fprintf(stderr, "    -s    scale the model\n");
 }
 
 int main(int argc, char **argv)
 {
     int result = 0;
 
-    if (argc < 2) {
-        fprintf(stderr, "ERROR: no input file is provided\n");
+    assert(argc > 0);
+    const char *program_name = shift(&argc, &argv);
+    const char *output_file_path = NULL;
+    const char *input_file_path = NULL;
+    float scale = 0.75;
+
+    // TODO: consider using https://github.com/tsoding/flag.h in here
+    while (argc > 0) {
+        const char *flag = shift(&argc, &argv);
+        if (strcmp(flag, "-o") == 0) {
+            if (argc <= 0) {
+                usage(program_name);
+                fprintf(stderr, "ERROR: no value is provided for flag %s\n", flag);
+                return_defer(1);
+            }
+
+            if (output_file_path != NULL) {
+                usage(program_name);
+                fprintf(stderr, "ERROR: %s was already provided\n", flag);
+                return_defer(1);
+            }
+
+            output_file_path = shift(&argc, &argv);
+        } else if (strcmp(flag, "-s") == 0) {
+            if (argc <= 0) {
+                usage(program_name);
+                fprintf(stderr, "ERROR: no value is provided for flag %s\n", flag);
+                return_defer(1);
+            }
+
+            const char *value = shift(&argc, &argv);
+            scale = strtof(value, NULL);
+        } else {
+            if (input_file_path != NULL) {
+                usage(program_name);
+                fprintf(stderr, "ERROR: input file path was already provided\n");
+                return_defer(1);
+            }
+            input_file_path = flag;
+        }
+    }
+
+    if (input_file_path == NULL) {
+        usage(program_name);
+        fprintf(stderr, "ERROR: no input file path is provided\n");
         return_defer(1);
     }
-    const char *obj_file_path = argv[1];
+
+    if (output_file_path == NULL) {
+        usage(program_name);
+        fprintf(stderr, "ERROR: no output file path is provided\n");
+        return_defer(1);
+    }
 
     char *buffer;
     size_t buffer_size;
-    Errno err = read_entire_file(obj_file_path, &buffer, &buffer_size);
+    Errno err = read_entire_file(input_file_path, &buffer, &buffer_size);
     if (err != 0) {
-        fprintf(stderr, "ERROR: could not read file %s: %s\n", obj_file_path, strerror(errno));
+        fprintf(stderr, "ERROR: could not read file %s: %s\n", input_file_path, strerror(errno));
         return_defer(1);
     }
 
@@ -182,7 +248,7 @@ int main(int argc, char **argv)
     int lf = INT_MAX, hf = INT_MIN;
     for (size_t line_number = 0; content.count > 0; ++line_number) {
         String_View line = sv_trim_left(sv_chop_by_delim(&content, '\n'));
-        if (line.count > 0) {
+        if (line.count > 0 && *line.data != '#') {
             String_View kind = sv_chop_by_delim(&line, ' ');
             if (sv_eq(kind, SV("v"))) {
                 char *endptr;
@@ -229,60 +295,33 @@ int main(int argc, char **argv)
 
                 da_append(&faces, make_face(a, b, c));
             } else {
-                fprintf(stderr, "%s:%zu: unknown kind of entry `"SV_Fmt"`\n", obj_file_path, line_number, SV_Arg(kind));
+                fprintf(stderr, "%s:%zu: unknown kind of entry `"SV_Fmt"`\n", input_file_path, line_number, SV_Arg(kind));
                 return_defer(1);
             }
         }
     }
+    printf("Input:    %s\n", input_file_path);
+    printf("Output:   %s\n", output_file_path);
     printf("Vertices: %zu (x: %f..%f, y: %f..%f, z: %f..%f)\n", vertices.count, lx, hx, ly, hy, lz, hz);
     printf("Faces:    %zu (index: %d..%d)\n", faces.count, lf, hf);
 
-    Olivec_Canvas oc = olivec_canvas(pixels, WIDTH, HEIGHT, WIDTH);
-    olivec_fill(oc, 0xFF202020);
+    for (size_t i = 0; i < vertices.count; ++i) {
+        vertices.items[i] = remap_object(vertices.items[i], scale, lx, hx, ly, hy, lz, hz);
+    }
 
     for (size_t i = 0; i < faces.count; ++i) {
-        Face f = faces.items[i];
-        Vector3 v1 = remap_teapot(vertices.items[f.a - 1], lx, hx, ly, hy, lz, hz);
-        Vector3 v2 = remap_teapot(vertices.items[f.b - 1], lx, hx, ly, hy, lz, hz);
-        Vector3 v3 = remap_teapot(vertices.items[f.c - 1], lx, hx, ly, hy, lz, hz);
-        Vector2 p1 = project_2d_scr(project_3d_2d(v1));
-        Vector2 p2 = project_2d_scr(project_3d_2d(v2));
-        Vector2 p3 = project_2d_scr(project_3d_2d(v3));
-        Olivec_Tri tri = olivec_tri_new(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-        int y1, y2;
-        if (olivec_tri_vert(&tri, HEIGHT, &y1, &y2)) {
-            for (int y = y1; y <= y2; ++y) {
-                int x1, x2;
-                if (olivec_tri_horz(&tri, WIDTH, y, &x1, &x2)) {
-                    for (int x = x1; x <= x2; ++x) {
-                        int u1, u2, det;
-                        olivec_tri_bary(&tri, x, y, &u1, &u2, &det);
-                        float z = 1/v1.z*u1/det + 1/v2.z*u2/det + 1/v3.z*(det - u1 - u2)/det;
-                        if (z > zbuffer[y*WIDTH + x]) {
-                            zbuffer[y*WIDTH + x] = z;
-                            OLIVEC_PIXEL(oc, x, y) = mix_color3(0xFF1818FF, 0xFF18FF18, 0xFFFF1818, u1, u2, det);
-
-                            z = 1.0f/z;
-                            if (z >= 1.0) {
-                                z -= 1.0;
-                                uint32_t v = z*255;
-                                if (v > 255) v = 255;
-                                olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), (v<<(3*8)));
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        faces.items[i].a -= 1;
+        faces.items[i].b -= 1;
+        faces.items[i].c -= 1;
     }
 
-    const char *file_path = "tri.png";
-    if (!stbi_write_png(file_path, WIDTH, HEIGHT, 4, pixels, sizeof(uint32_t)*WIDTH)) {
-        fprintf(stderr, "ERROR: could not write file %s\n", file_path);
+    FILE *out = fopen(output_file_path, "wb");
+    if (out == NULL) {
+        fprintf(stderr, "ERROR: Could not write file %s: %s\n", output_file_path, strerror(errno));
         return_defer(1);
     }
+    generate_code(out, vertices, faces);
 
 defer:
-    arena_free(&default_arena);
     return result;
 }

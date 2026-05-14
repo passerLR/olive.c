@@ -419,7 +419,6 @@ OLIVECDEF void olivec_fill_triangle3uv(Olivec_Canvas oc, int x1, int y1, int x2,
             int u1 = x_BC*y_CP - x_CP*y_BC;
             int u2 = x_CA*y_CP - x_CP*y_CA;
             int u3 = det - u1 - u2;
-            //if (u1*det >= 0 && u2*det >= 0 && u3*det >= 0) {
             if ((OLIVEC_SIGN(int, u1) == OLIVEC_SIGN(int, det) || u1 == 0) &&
                 (OLIVEC_SIGN(int, u2) == OLIVEC_SIGN(int, det) || u2 == 0) &&
                 (OLIVEC_SIGN(int, u3) == OLIVEC_SIGN(int, det) || u3 == 0)) {
