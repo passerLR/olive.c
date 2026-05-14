@@ -270,12 +270,9 @@ Olivec_Canvas test_alpha_blending(void)
     olivec_fill_rect(oc, 0, 0, WIDTH*3/4, HEIGHT*3/4, RED_COLOR);
     olivec_fill_rect(oc, WIDTH - 1, HEIGHT - 1, -WIDTH*3/4, -HEIGHT*3/4, 0x7720AA20);
     olivec_fill_circle(oc, WIDTH/2, HEIGHT/2, WIDTH*3/8, 0xBBAA2020);
-    {
-        int x1 = WIDTH/2, y1 = HEIGHT/8;
-        int x2 = WIDTH/8, y2 = HEIGHT/2;
-        int x3 = WIDTH*7/8, y3 = HEIGHT*7/8;
-        olivec_fill_triangle(oc, x1, y1, x2, y2, x3, y3, 0x7720AAAA);
-    }
+
+    olivec_fill_triangle(oc, 0, HEIGHT-1, WIDTH-1, HEIGHT-1, WIDTH/2, 0, 0xBB20AAAA);
+    olivec_fill_triangle3c(oc, 0, 0, WIDTH-1, 0, WIDTH/2, HEIGHT-1, 0xBB2020AA, 0xBB20AA20, 0xBBAA2020);
 
     return oc;
 }

@@ -40,11 +40,20 @@ function readCanvasFromMemory(memory_buffer, canvas_ptr)
 }
 
 async function startExample(elementId, wasmPath) {
-    const app = document.getElementById(elementId);
+    const app = document.getElementById(`app-${elementId}`);
     if (app === null) {
-        console.error(`Could not find element ${elementId}. Skipping example ${wasmPath}...`);
+        console.error(`Could not find element app-${elementId}. Skipping example ${wasmPath}...`);
         return;
     }
+
+    const sec = document.getElementById(`sec-${elementId}`);
+    if (sec === null) {
+        console.error(`Could not find element sec-${elementId}. Skipping demo ${wasmPath}...`);
+        return;
+    }
+    let paused = true;
+    sec.addEventListener("mouseenter", () => paused = false);
+    sec.addEventListener("mouseleave", () => paused = true);
 
     const ctx = app.getContext("2d");
     const w = await WebAssembly.instantiateStreaming(fetch(wasmPath), {
@@ -53,15 +62,7 @@ async function startExample(elementId, wasmPath) {
 
     const heap_base = w.instance.exports.__heap_base.value;
 
-    let prev = null;
-    function first(timestamp) {
-        prev = timestamp;
-        window.requestAnimationFrame(loop);
-    }
-    function loop(timestamp) {
-        const dt = timestamp - prev;
-        prev = timestamp;
-
+    function wasm_render(dt) {
         const buffer = w.instance.exports.memory.buffer;
         // const image = new ImageData(new Uint8ClampedArray(buffer, pixels, app.width*app.height*4), app.width);
         w.instance.exports.render(heap_base, dt*0.001);
@@ -75,6 +76,18 @@ async function startExample(elementId, wasmPath) {
         app.width = canvas.width;
         app.height = canvas.height;
         ctx.putImageData(image, 0, 0);
+    }
+
+    let prev = null;
+    function first(timestamp) {
+        prev = timestamp;
+        wasm_render(0);
+        window.requestAnimationFrame(loop);
+    }
+    function loop(timestamp) {
+        const dt = timestamp - prev;
+        prev = timestamp;
+        if (!paused) wasm_render(dt);
         window.requestAnimationFrame(loop);
     }
     window.requestAnimationFrame(first);

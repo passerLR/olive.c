@@ -4,23 +4,39 @@
   </head>
   <body>
       <h1>Olive.c Demos</h1>
+
+      <div id="sec-triangle">
       <h2 id="demo-triangle"><a href="#demo-triangle">Triangle</a></h2>
       <canvas id="app-triangle"></canvas>
+      </div>
+      
+      <div id="sec-rotating_3d">
       <h2 id="demo-rotating_3d"><a href="#demo-rotating_3d">Rotating Matrix</a></h2>
       <canvas id="app-rotating_3d"></canvas>
+      </div>
+
+      <div id="sec-squish">
       <h2 id="demo-squish"><a href="#demo-squish">Squish</a></h2>
       <canvas id="app-squish"></canvas>
+      </div>
+
+      <div id="sec-triangle_3d">
       <h2 id="demo-triangle_3d"><a href="#demo-triangle_3d">Triangle_3d</a></h2>
       <canvas id="app-triangle_3d"></canvas>
+      </div>
+
+      <div id="sec-triangle_texture">
       <h2 id="demo-triangle_texture"><a href="#demo-triangle_texture">Triangle_Texture</a></h2>
       <canvas id="app-triangle_texture"></canvas>
+      </div>
+
       <script src="index.js"></script>
       <script>
-        startExample("app-triangle", "./wasm/triangle.wasm");
-        startExample("app-rotating_3d", "./wasm/rotating_3d.wasm");
-        startExample("app-squish", "./wasm/squish.wasm");
-        startExample("app-triangle_3d", "./wasm/triangle_3d.wasm");
-        startExample("app-triangle_texture", "./wasm/triangle_texture.wasm");
+        startExample("triangle", "./wasm/triangle.wasm");
+        startExample("rotating_3d", "./wasm/rotating_3d.wasm");
+        startExample("squish", "./wasm/squish.wasm");
+        startExample("triangle_3d", "./wasm/triangle_3d.wasm");
+        startExample("triangle_texture", "./wasm/triangle_texture.wasm");
       </script>
   </body>
 </html>
