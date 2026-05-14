@@ -503,6 +503,7 @@ Olivec_Canvas test_weird_triangle_bug(void)
     Olivec_Canvas dst = canvas_alloc(w, h);
     olivec_fill(dst, 0xFF181818);
     olivec_fill_triangle3c(dst, w/4, h/4, w/2, 0, 0, h, 0xFF0000FF, 0xFF00FF00, 0xFFFF0000);
+    //olivec_fill_triangle3c(dst, w/4, h/4, 0, h-1, w-1, 0, 0xFF00FF00, 0xFFFF0000, 0xFF0000FF);
     return dst;
 }
 Test_Case test_cases[] = {
