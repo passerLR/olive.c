@@ -119,29 +119,40 @@ defer:
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <math.h>
+
+// #define STB_IMAGE_WRITE_IMPLEMENTATION
+// #include "stb_image_write.h"
 
 static size_t actual_width = 0;
 static size_t actual_height = 0;
 static size_t scaled_down_width = 0;
 static size_t scaled_down_height = 0;
-static char *char_canvas = 0;
+static int  *char_canvas = 0;
 
-char color_to_char(uint32_t pixel)
+#include "ANSI_RGB_table.c"
+
+static int distance256(int table256[256][3], int i, int a, int b, int c)
 {
-    uint32_t r = OLIVEC_RED(pixel);
-    uint32_t g = OLIVEC_GREEN(pixel);
-    uint32_t b = OLIVEC_BLUE(pixel);
-    uint32_t a = OLIVEC_ALPHA(pixel);
-    
-    size_t bright = r;
-    if (bright < g) bright = g;
-    if (bright < b) bright = b;
-    bright = bright*a/255;
-
-    char table[] = " .:a@#";
-    size_t n = sizeof(table) - 1;
-    return table[bright*n/256];
+    int da = a - table256[i][0];
+    int db = b - table256[i][1];
+    int dc = c - table256[i][2];
+    return da*da + db*db + dc*dc;
 }
+
+static int find_ansi_index(int table256[256][3], int a, int b, int c)
+{
+    int index = 0, d_min = distance256(table256, index, a, b, c);
+    for (int i = 1; i < 256; ++i) {
+        int d = distance256(table256, i, a, b, c);
+        if (d < d_min) {
+            index = i;
+            d_min = d;
+        }
+    }
+    return index;
+}
+
 
 uint32_t compress_pixels_chunk(Olivec_Canvas oc)
 {
@@ -190,7 +201,8 @@ void compress_pixels(Olivec_Canvas oc)
     for (size_t y = 0; y < scaled_down_height; ++y) {
         for (size_t x = 0; x < scaled_down_width; ++x) {
             Olivec_Canvas soc = olivec_subcanvas(oc, x*SCALE_DOWN_FACTOR, y*SCALE_DOWN_FACTOR, SCALE_DOWN_FACTOR, SCALE_DOWN_FACTOR);
-            char_canvas[y*scaled_down_width + x] = color_to_char(compress_pixels_chunk(soc));
+            uint32_t cp = compress_pixels_chunk(soc);
+            char_canvas[y*scaled_down_width + x] = find_ansi_index(rgb256, OLIVEC_RED(cp), OLIVEC_GREEN(cp), OLIVEC_BLUE(cp));
         }
     }
 }
@@ -203,10 +215,9 @@ int main(void)
         compress_pixels(render(1.f/60.f));
         for (size_t y = 0; y < scaled_down_height; ++y) {
             for (size_t x = 0; x < scaled_down_width; ++x) {
-                putc(char_canvas[y*scaled_down_width + x], stdout);
-                putc(char_canvas[y*scaled_down_width + x], stdout);
+                printf("\033[48;5;%dm  ", char_canvas[y*scaled_down_width + x]);
             }
-            putc('\n', stdout);
+            printf("\033[0m\n");
         }
 
         usleep(1000*1000/60);

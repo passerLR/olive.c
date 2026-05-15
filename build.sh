@@ -45,12 +45,13 @@ build_tools() {
     mkdir -p ./bin
     $CC $COMMON_CFLAGS -O2 -o ./bin/png2c ./tools/png2c.c -lm &
     $CC $COMMON_CFLAGS -O2 -o ./bin/obj2c ./tools/obj2c.c -lm &
+    $CC $COMMON_CFLAGS -O2 -o ./bin/img2term ./tools/img2term.c -lm &
     wait # TODO: the whole script must fail if one of the jobs fails
 }
 
 build_assets() {
     mkdir -p ./assets/
-    ./bin/png2c -n tsodinPog -o ./assets/tsodinPog.c ./assets/ppng.png &
+    ./bin/png2c -o ./assets/ppng.c ./assets/tsodinPog.png &
     # ./bin/png2c -n Sadge -o ./assets/Sadge.c ./assets/Sadge.png &
     ./bin/png2c -n kun -o ./assets/kun.c ./assets/kun.png&
     ./bin/obj2c ./assets/cup.obj -o ./assets/cup.c &
