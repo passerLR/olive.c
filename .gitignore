@@ -6,4 +6,6 @@ bin/*
 *_actual.png
 *_diff.png
 tags
-
+nob
+nob.exe
+*.old
