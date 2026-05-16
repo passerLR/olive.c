@@ -12,6 +12,12 @@
 #define OLIVEC_SIGN(T, x) ((T)((x) > 0) - (T)((x) < 0))
 #define OLIVEC_ABS(T, x) (OLIVEC_SIGN(T, x)*(x))
 
+#define OLIVEC_RED(color)   (((color)&0x000000FF)>>(8*0))
+#define OLIVEC_GREEN(color) (((color)&0x0000FF00)>>(8*1))
+#define OLIVEC_BLUE(color)  (((color)&0x00FF0000)>>(8*2))
+#define OLIVEC_ALPHA(color) (((color)&0xFF000000)>>(8*3))
+#define OLIVEC_RGBA(r, g, b, a) ((((r)&0xFF)<<(8*0)) | (((g)&0xFF)<<(8*1)) | (((b)&0xFF)<<(8*2)) | (((a)&0xFF)<<(8*3)))
+
 typedef struct {
     size_t width, height;
     const char *glyphs;
@@ -62,6 +68,7 @@ OLIVECDEF void olivec_fill_triangle3uv(Olivec_Canvas oc, int x1, int y1, int x2,
 OLIVECDEF void olivec_draw_line(Olivec_Canvas oc, int x1, int y1, int x2, int y2, uint32_t color);
 OLIVECDEF void olivec_text(Olivec_Canvas oc, const char *text, Olivec_Font font, int x, int y, size_t size, uint32_t color);
 OLIVECDEF void olivec_sprite_copy (Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h);
+OLIVECDEF void olivec_sprite_copy_bilinear(Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h);
 OLIVECDEF void olivec_sprite_blend(Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h);
 OLIVECDEF bool olivec_normalize_rect(int x, int y, int w, int h, size_t width, size_t height, Olivec_Normalized_Rect *nr);
 OLIVECDEF bool olivec_norm_rect4tri(int x1, int y1, int x2, int y2, int x3, int y3, size_t width, size_t height, Olivec_Normalized_Rect *nr);
@@ -136,12 +143,6 @@ OLIVECDEF Olivec_Canvas olivec_subcanvas(Olivec_Canvas oc, int x, int y, int w, 
     return oc;
 }
 
-#define OLIVEC_RED(color)   (((color)&0x000000FF)>>(8*0))
-#define OLIVEC_GREEN(color) (((color)&0x0000FF00)>>(8*1))
-#define OLIVEC_BLUE(color)  (((color)&0x00FF0000)>>(8*2))
-#define OLIVEC_ALPHA(color) (((color)&0xFF000000)>>(8*3))
-#define OLIVEC_RGBA(r, g, b, a) ((((r)&0xFF)<<(8*0)) | (((g)&0xFF)<<(8*1)) | (((b)&0xFF)<<(8*2)) | (((a)&0xFF)<<(8*3)))
-
 OLIVECDEF void olivec_blend_color(uint32_t *c1, uint32_t c2)
 {
     uint32_t r1 = OLIVEC_RED(*c1);
@@ -154,9 +155,9 @@ OLIVECDEF void olivec_blend_color(uint32_t *c1, uint32_t c2)
     uint32_t b2 = OLIVEC_BLUE(c2);
     uint32_t a2 = OLIVEC_ALPHA(c2);
 
-    r1 = (r1*(255 - a2) + r2*a2)/255; if (r1 > 255) r1 = 255;
-    g1 = (g1*(255 - a2) + g2*a2)/255; if (g1 > 255) g1 = 255;
-    b1 = (b1*(255 - a2) + b2*a2)/255; if (b1 > 255) b1 = 255;
+    r1 = (r1*(255 - a2) + r2*a2)/255;
+    g1 = (g1*(255 - a2) + g2*a2)/255;
+    b1 = (b1*(255 - a2) + b2*a2)/255;
 
     *c1 = OLIVEC_RGBA(r1, g1, b1, a1);
 }
@@ -294,16 +295,12 @@ OLIVECDEF void olivec_fill_triangle(Olivec_Canvas oc, int x1, int y1, int x2, in
 {
     Olivec_Normalized_Rect nr = {0};
     if (!olivec_norm_rect4tri(x1, y1, x2, y2, x3, y3, oc.width, oc.height, &nr)) return;
-    int xmin = nr.x1;
-    int xmax = nr.x2;
-    int ymin = nr.y1;
-    int ymax = nr.y2;
 
     int x_BC = x3 - x2, y_BC = y3 - y2;
     int x_CA = x1 - x3, y_CA = y1 - y3;
     int det = x_BC*y_CA - x_CA*y_BC; if (det == 0) return;
-    for (int x = xmin; x <= xmax; x++) {
-        for (int y = ymin; y <= ymax; y++) {
+    for (int x = nr.x1; x <= nr.x2; x++) {
+        for (int y = nr.y1; y <= nr.y2; y++) {
             int x_CP = x - x3, y_CP = y - y3;
             int u1 = x_BC*y_CP - x_CP*y_BC;
             int u2 = x_CA*y_CP - x_CP*y_CA;
@@ -322,26 +319,26 @@ uint32_t mix_color3(uint32_t c1, uint32_t c2, uint32_t c3, int u1, int u2, int d
 {
     if(det == 0) return c1;
 
-    int64_t r1 = OLIVEC_RED  (c1);
-    int64_t g1 = OLIVEC_GREEN(c1);
-    int64_t b1 = OLIVEC_BLUE (c1);
-    int64_t a1 = OLIVEC_ALPHA(c1);
+    int r1 = OLIVEC_RED  (c1);
+    int g1 = OLIVEC_GREEN(c1);
+    int b1 = OLIVEC_BLUE (c1);
+    int a1 = OLIVEC_ALPHA(c1);
 
-    int64_t r2 = OLIVEC_RED  (c2);
-    int64_t g2 = OLIVEC_GREEN(c2);
-    int64_t b2 = OLIVEC_BLUE (c2);
-    int64_t a2 = OLIVEC_ALPHA(c2);
+    int r2 = OLIVEC_RED  (c2);
+    int g2 = OLIVEC_GREEN(c2);
+    int b2 = OLIVEC_BLUE (c2);
+    int a2 = OLIVEC_ALPHA(c2);
 
-    int64_t r3 = OLIVEC_RED  (c3);
-    int64_t g3 = OLIVEC_GREEN(c3);
-    int64_t b3 = OLIVEC_BLUE (c3);
-    int64_t a3 = OLIVEC_ALPHA(c3);
+    int r3 = OLIVEC_RED  (c3);
+    int g3 = OLIVEC_GREEN(c3);
+    int b3 = OLIVEC_BLUE (c3);
+    int a3 = OLIVEC_ALPHA(c3);
 
     int u3 = det - u1 - u2;
-    int64_t r = (r1*u1 + r2*u2 + r3*u3)/det;
-    int64_t g = (g1*u1 + g2*u2 + g3*u3)/det;
-    int64_t b = (b1*u1 + b2*u2 + b3*u3)/det;
-    int64_t a = (a1*u1 + a2*u2 + a3*u3)/det;
+    int r = (r1*u1 + r2*u2 + r3*u3)/det;
+    int g = (g1*u1 + g2*u2 + g3*u3)/det;
+    int b = (b1*u1 + b2*u2 + b3*u3)/det;
+    int a = (a1*u1 + a2*u2 + a3*u3)/det;
 
     return OLIVEC_RGBA(r, g, b, a);
 }
@@ -350,16 +347,12 @@ OLIVECDEF void olivec_fill_triangle3c(Olivec_Canvas oc, int x1, int y1, int x2, 
 {
     Olivec_Normalized_Rect nr = {0};
     if (!olivec_norm_rect4tri(x1, y1, x2, y2, x3, y3, oc.width, oc.height, &nr)) return;
-    int xmin = nr.x1;
-    int xmax = nr.x2;
-    int ymin = nr.y1;
-    int ymax = nr.y2;
 
     int x_BC = x3 - x2, y_BC = y3 - y2;
     int x_CA = x1 - x3, y_CA = y1 - y3;
     int det = x_BC*y_CA - x_CA*y_BC; if (det == 0) return;
-    for (int x = xmin; x <= xmax; x++) {
-        for (int y = ymin; y <= ymax; y++) {
+    for (int x = nr.x1; x <= nr.x2; x++) {
+        for (int y = nr.y1; y <= nr.y2; y++) {
             int x_CP = x - x3, y_CP = y - y3;
             int u1 = x_BC*y_CP - x_CP*y_BC;
             int u2 = x_CA*y_CP - x_CP*y_CA;
@@ -377,16 +370,12 @@ OLIVECDEF void olivec_fill_triangle3z(Olivec_Canvas oc, int x1, int y1, int x2, 
 {
     Olivec_Normalized_Rect nr = {0};
     if (!olivec_norm_rect4tri(x1, y1, x2, y2, x3, y3, oc.width, oc.height, &nr)) return;
-    int xmin = nr.x1;
-    int xmax = nr.x2;
-    int ymin = nr.y1;
-    int ymax = nr.y2;
 
     int x_BC = x3 - x2, y_BC = y3 - y2;
     int x_CA = x1 - x3, y_CA = y1 - y3;
     int det = x_BC*y_CA - x_CA*y_BC; if (det == 0) return;
-    for (int x = xmin; x <= xmax; x++) {
-        for (int y = ymin; y <= ymax; y++) {
+    for (int x = nr.x1; x <= nr.x2; x++) {
+        for (int y = nr.y1; y <= nr.y2; y++) {
             int x_CP = x - x3, y_CP = y - y3;
             int u1 = x_BC*y_CP - x_CP*y_BC;
             int u2 = x_CA*y_CP - x_CP*y_CA;
@@ -405,16 +394,12 @@ OLIVECDEF void olivec_fill_triangle3uv(Olivec_Canvas oc, int x1, int y1, int x2,
 {
     Olivec_Normalized_Rect nr = {0};
     if (!olivec_norm_rect4tri(x1, y1, x2, y2, x3, y3, oc.width, oc.height, &nr)) return;
-    int xmin = nr.x1;
-    int xmax = nr.x2;
-    int ymin = nr.y1;
-    int ymax = nr.y2;
 
     int x_BC = x3 - x2, y_BC = y3 - y2;
     int x_CA = x1 - x3, y_CA = y1 - y3;
     int det = x_BC*y_CA - x_CA*y_BC; if (det == 0) return;
-    for (int x = xmin; x <= xmax; x++) {
-        for (int y = ymin; y <= ymax; y++) {
+    for (int x = nr.x1; x <= nr.x2; x++) {
+        for (int y = nr.y1; y <= nr.y2; y++) {
             int x_CP = x - x3, y_CP = y - y3;
             int u1 = x_BC*y_CP - x_CP*y_BC;
             int u2 = x_CA*y_CP - x_CP*y_CA;
@@ -453,6 +438,24 @@ OLIVECDEF void olivec_text(Olivec_Canvas oc, const char *text, Olivec_Font font,
     }
 }
 
+OLIVECDEF void olivec_sprite_blend(Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h)
+{
+    if (src.width == 0 || src.height == 0) return;
+
+    Olivec_Normalized_Rect nr = {0};
+    if (!olivec_normalize_rect(x0, y0, w, h, dst.width, dst.height, &nr)) return;
+
+    int xa = nr.ox1; if (w < 0) xa = nr.ox2;
+    int ya = nr.oy1; if (h < 0) ya = nr.oy2;
+    for (int y = nr.y1; y <= nr.y2; ++y) {
+        for (int x = nr.x1; x <= nr.x2; ++x) {
+            size_t nx = (x - xa)*((int) src.width)/w;
+            size_t ny = (y - ya)*((int) src.height)/h;
+            olivec_blend_color(&OLIVEC_PIXEL(dst, x, y), OLIVEC_PIXEL(src, nx, ny));
+        }
+    }
+}
+
 OLIVECDEF void olivec_sprite_copy(Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h)
 {
     if (src.width == 0 || src.height == 0) return;
@@ -471,7 +474,32 @@ OLIVECDEF void olivec_sprite_copy(Olivec_Canvas dst, Olivec_Canvas src, int x0, 
     }
 }
 
-OLIVECDEF void olivec_sprite_blend(Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h)
+uint32_t mix_color2(float x, uint32_t c1, float x1, uint32_t c2, float x2)
+{
+    int det = x1 - x2;
+    if (OLIVEC_ABS(float, det) < 1.0e-6) return c1;
+
+    int r1 = OLIVEC_RED  (c1);
+    int g1 = OLIVEC_GREEN(c1);
+    int b1 = OLIVEC_BLUE (c1);
+    int a1 = OLIVEC_ALPHA(c1);
+
+    int r2 = OLIVEC_RED  (c2);
+    int g2 = OLIVEC_GREEN(c2);
+    int b2 = OLIVEC_BLUE (c2);
+    int a2 = OLIVEC_ALPHA(c2);
+
+    int u1  = x  - x2;
+    int u2  = x1 - x;
+    int r = (r1*u1 + r2*u2)/det;
+    int g = (g1*u1 + g2*u2)/det;
+    int b = (b1*u1 + b2*u2)/det;
+    int a = (a1*u1 + a2*u2)/det;
+
+    return OLIVEC_RGBA(r, g, b, a);
+}
+
+OLIVECDEF void olivec_sprite_copy_bilinear(Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h)
 {
     if (src.width == 0 || src.height == 0) return;
 
@@ -482,9 +510,19 @@ OLIVECDEF void olivec_sprite_blend(Olivec_Canvas dst, Olivec_Canvas src, int x0,
     int ya = nr.oy1; if (h < 0) ya = nr.oy2;
     for (int y = nr.y1; y <= nr.y2; ++y) {
         for (int x = nr.x1; x <= nr.x2; ++x) {
-            size_t nx = (x - xa)*((int) src.width)/w;
-            size_t ny = (y - ya)*((int) src.height)/h;
-            olivec_blend_color(&OLIVEC_PIXEL(dst, x, y), OLIVEC_PIXEL(src, nx, ny));
+            int nx  = (x - xa)*((int) src.width);
+            int ny  = (y - ya)*((int) src.height);
+            int nx1 = (x - xa)*((int) src.width) + w;
+            int ny1 = (y - ya)*((int) src.height) + h;
+            if (nx1/w >= (int) src.width) nx1 = (src.width - 1)*w;
+            if (ny1/h >= (int) src.height) ny1 = (src.height - 1)*h;
+            uint32_t c1 = OLIVEC_PIXEL(src, nx/w, ny/h);
+            uint32_t c2 = OLIVEC_PIXEL(src, nx1/w, ny/h);
+            uint32_t c3 = OLIVEC_PIXEL(src, nx/w, ny1/h);
+            uint32_t c4 = OLIVEC_PIXEL(src, nx1/w, ny1/h);
+            uint32_t c12 = mix_color2(nx, c1, nx/w*w, c2, nx1);
+            uint32_t c34 = mix_color2(nx, c3, nx/w*w, c4, nx1);
+            OLIVEC_PIXEL(dst, x, y) = mix_color2(ny, c12, ny/h*h, c34, ny1);
         }
     }
 }

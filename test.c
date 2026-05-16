@@ -371,26 +371,19 @@ Olivec_Canvas test_hello_world(void)
     return oc;
 }
 
-Olivec_Canvas kun_example(void)
+// #include "./assets/kun.c"
+#include "./assets/ppng.c"
+Olivec_Canvas test_sprite_copy_bilinear(void)
 {
-    const char *filepath = "./assets/kun.png";
-    int x, y, n;
-    uint32_t *data = (uint32_t *)stbi_load(filepath, &x, &y, &n, 4);
-    if (data == NULL) {
-        fprintf(stderr, "Could not load file `%s`: %s\n", filepath, strerror(errno));
-        return olivec_canvas(NULL, 0, 0, 0);
-    }
-    // printf("%d, %d, %d\n", x, y, n);
+    // Olivec_Canvas src = olivec_canvas(kun_pixels, kun_width, kun_height, kun_width);
+    Olivec_Canvas src = olivec_canvas(png_pixels, png_width, png_height, png_width);
 
-    size_t width  = 128;
-    size_t height = 128;
-    Olivec_Canvas oc = canvas_alloc(width, height);
+    size_t width  = 256;
+    size_t height = 256;
+    Olivec_Canvas oc = canvas_alloc(width*2, height);
     olivec_fill(oc, BACKGROUND_COLOR);
-    olivec_sprite_copy(
-        oc,
-        olivec_canvas(data, x, y, x),
-        0, 0, width, height);
-        //width/2, height/2, width, height);
+    olivec_sprite_copy(oc, src, width-1, height-1, -width, -height);
+    olivec_sprite_copy_bilinear(oc, src, width*2-1, height-1, -width, -height);
 
     return oc;
 }
@@ -514,7 +507,7 @@ Test_Case test_cases[] = {
     DEFINE_TEST_CASE(line_example),
     DEFINE_TEST_CASE(text_example),
     DEFINE_TEST_CASE(test_hello_world),
-    DEFINE_TEST_CASE(kun_example),
+    DEFINE_TEST_CASE(test_sprite_copy_bilinear),
     DEFINE_TEST_CASE(test_line_edge_cases),
     DEFINE_TEST_CASE(test_frame),
     DEFINE_TEST_CASE(test_copy_flip),
@@ -671,7 +664,7 @@ int main(int argc, char **argv)
     int result = 0;
 
     {
-        const char *program_path = shift(&argc,  &argv);
+        const char *program_path = shift(&argc, &argv);
 
         if (argc <= 0) {
             usage(program_path);

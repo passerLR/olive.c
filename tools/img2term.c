@@ -612,7 +612,7 @@ int main(int argc, char **argv)
     assert(argc > 0);
     const char *program = shift_args(&argc, &argv);
 
-    char *file_path = NULL;
+    const char *file_path = NULL;
     int resized_width = DEFAULT_WIDTH;
     Distance distance = DIST_HSL;
 
@@ -639,7 +639,7 @@ int main(int argc, char **argv)
             usage(program);
             exit(0);
         } else {
-            file_path = (char*) flag;
+            file_path = flag;
         }
     }
         
