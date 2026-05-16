@@ -612,6 +612,7 @@ int main(int argc, char **argv)
     assert(argc > 0);
     const char *program = shift_args(&argc, &argv);
 
+    char *file_path = NULL;
     int resized_width = DEFAULT_WIDTH;
     Distance distance = DIST_HSL;
 
@@ -638,65 +639,69 @@ int main(int argc, char **argv)
             usage(program);
             exit(0);
         } else {
-            const char *file_path = flag;
-
-            int width, height;
-            uint32_t *pixels = (uint32_t*)stbi_load(file_path, &width, &height, NULL, 4);
-            if (pixels == NULL) {
-                fprintf(stderr, "ERROR: could not read file %s\n", file_path);
-                continue;
-            }
-
-            int resized_height = height*resized_width/width;
-
-            // TODO: maybe use a custom resize algorithm that does not require any memory allocation?
-            // Similar to how olive.c resize the sprites.
-            // (Though stb_image_resize supports a lot of fancy filters and stuff which we may try
-            // to utilize to improve the results)
-            uint32_t *resized_pixels = malloc(sizeof(uint32_t)*resized_width*resized_height);
-            if (resized_pixels == NULL) {
-                fprintf(stderr, "ERROR: could not allocate memory for resized image\n");
-                exit(1);
-            }
-
-            // TODO: stbir_resize_uint8 returns int, which means it can fail. We should check for that.
-            stbir_resize_uint8(
-                (const unsigned char*)pixels, width, height, sizeof(uint32_t)*width,
-                (unsigned char*)resized_pixels, resized_width, resized_height, sizeof(uint32_t)*resized_width,
-                4);
-
-            for (int y = 0; y < resized_height; ++y) {
-                for (int x = 0; x < resized_width; ++x) {
-                    uint32_t pixel = resized_pixels[y*resized_width + x];
-                    int r = (pixel>>8*0)&0xFF;
-                    int g = (pixel>>8*1)&0xFF;
-                    int b = (pixel>>8*2)&0xFF;
-                    int a = (pixel>>8*3)&0xFF;
-                    r = a*r/255;
-                    g = a*g/255;
-                    b = a*b/255;
-                    switch (distance) {
-                    case DIST_HSL: {
-                        int h, s, l;
-                        rgb_to_hsl(r, g, b, &h, &s, &l);
-                        printf("\e[48;5;%dm  ", find_ansi_index(hsl256, h, s, l));
-                    } break;
-
-                    case DIST_RGB: {
-                        printf("\e[48;5;%dm  ", find_ansi_index(rgb256, r, g, b));
-                    } break;
-
-                    default: assert(0 && "unreachable");
-                    }
-                }
-                printf("\e[0m\n");
-            }
-            printf("\e[0m\n");
-
-            free(resized_pixels);
-            stbi_image_free(pixels);
+            file_path = (char*) flag;
         }
     }
+        
+    if (file_path == NULL) {
+        fprintf(stderr, "ERROR: no input png file\n");
+        exit(1);
+    }
+    int width, height;
+    uint32_t *pixels = (uint32_t*)stbi_load(file_path, &width, &height, NULL, 4);
+    if (pixels == NULL) {
+        fprintf(stderr, "ERROR: could not read file %s\n", file_path);
+        return 0;
+    }
+
+    int resized_height = height*resized_width/width;
+
+    // TODO: maybe use a custom resize algorithm that does not require any memory allocation?
+    // Similar to how olive.c resize the sprites.
+    // (Though stb_image_resize supports a lot of fancy filters and stuff which we may try
+    // to utilize to improve the results)
+    uint32_t *resized_pixels = malloc(sizeof(uint32_t)*resized_width*resized_height);
+    if (resized_pixels == NULL) {
+        fprintf(stderr, "ERROR: could not allocate memory for resized image\n");
+        exit(1);
+    }
+
+    // TODO: stbir_resize_uint8 returns int, which means it can fail. We should check for that.
+    stbir_resize_uint8(
+        (const unsigned char*)pixels, width, height, sizeof(uint32_t)*width,
+        (unsigned char*)resized_pixels, resized_width, resized_height, sizeof(uint32_t)*resized_width,
+        4);
+
+    for (int y = 0; y < resized_height; ++y) {
+        for (int x = 0; x < resized_width; ++x) {
+            uint32_t pixel = resized_pixels[y*resized_width + x];
+            int r = (pixel>>8*0)&0xFF;
+            int g = (pixel>>8*1)&0xFF;
+            int b = (pixel>>8*2)&0xFF;
+            int a = (pixel>>8*3)&0xFF;
+            r = a*r/255;
+            g = a*g/255;
+            b = a*b/255;
+            switch (distance) {
+            case DIST_HSL: {
+                int h, s, l;
+                rgb_to_hsl(r, g, b, &h, &s, &l);
+                printf("\e[48;5;%dm  ", find_ansi_index(hsl256, h, s, l));
+            } break;
+
+            case DIST_RGB: {
+                printf("\e[48;5;%dm  ", find_ansi_index(rgb256, r, g, b));
+            } break;
+
+            default: assert(0 && "unreachable");
+            }
+        }
+        printf("\e[0m\n");
+    }
+    printf("\e[0m\n");
+
+    free(resized_pixels);
+    stbi_image_free(pixels);
 
     return 0;
 }
