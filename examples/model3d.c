@@ -41,8 +41,8 @@ Vector3 make_vector3(float x, float y, float z)
 
 Vector2 project_3d_2d(Vector3 v3)
 {
-    if (v3.z < 0) v3.z = -v3.z;
-    if (v3.z < EPSILON) v3.z += EPSILON;
+    // if (v3.z < 0) v3.z = -v3.z;
+    if (v3.z < EPSILON) v3.z = EPSILON;
     return make_vector2(v3.x/v3.z, v3.y/v3.z);
 }
 
@@ -66,7 +66,7 @@ static float near = 0.1f;
 static float far = 5.0f;
 // static float cx = 0.0f;
 // static float cy = 0.0f;
-static float cz = 2.0f;
+static float cz = 1.8f;
 
 Olivec_Canvas render(float dt)
 {
