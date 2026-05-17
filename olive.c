@@ -252,20 +252,12 @@ OLIVECDEF void olivec_draw_line(Olivec_Canvas oc, int x1, int y1, int x2, int y2
             OLIVEC_SWAP(int, x1, x2);
             OLIVEC_SWAP(int, y1, y2);
         }
-
-        // Cull out invisible line
-        if (x1 >= (int) oc.width || x2 < 0) return;
-        
-        // Clamp the line to the boundaries
-        if (x1 < 0) x1 = 0;
-        if (x2 >= (int) oc.width) x2 = (int) oc.width - 1;
         
         for (int x = x1; x <= x2; ++x) {
+            if (0 > x || x >= (int) oc.width) continue;
             int y = dy*(x - x1)/dx + y1;
-            // TODO: move boundary checks out side of the loops in olivec_draw_line
-            if (0 <= y && y < (int) oc.height) {
-                olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
-            }
+            if (0 > y || y >= (int) oc.height) continue;
+            olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
         }
     } else {
         if (y1 > y2) {
@@ -273,19 +265,11 @@ OLIVECDEF void olivec_draw_line(Olivec_Canvas oc, int x1, int y1, int x2, int y2
             OLIVEC_SWAP(int, y1, y2);
         }
 
-        // Cull out invisible line
-        if (y1 >= (int) oc.height || y2 < 0) return;
-        
-        // Clamp the line to the boundaries
-        if (y1 < 0) y1 = 0;
-        if (y2 >= (int) oc.height) y2 = (int) oc.height - 1;
-
         for (int y = y1; y <= y2; ++y) {
+            if (0 > y || y >= (int) oc.height) continue;
             int x = dx*(y - y1)/dy + x1;
-            // TODO: move boundary checks out side of the loops in olivec_draw_line
-            if (0 <= x && x < (int) oc.width) {
-                olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
-            }
+            if (0 > x || x >= (int) oc.width) continue;
+            olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
         }
     }
 }

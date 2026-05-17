@@ -349,6 +349,22 @@ Olivec_Canvas line_example(void)
     return oc;
 }
 
+Olivec_Canvas test_line_bug_offset(void)
+{
+    size_t factor = 3;
+    size_t width = 100*factor;
+    size_t height = 50*factor;
+    Olivec_Canvas dst = canvas_alloc(width, height);
+    olivec_fill(dst, BACKGROUND_COLOR);
+    int x1 = 50;
+    int y1 = 100;
+    int x2 = 0;
+    int y2 = -100;
+    olivec_draw_line(dst, x1, y1, x2, y2, GREEN_COLOR);
+    olivec_fill_circle(dst, x1, y1, 5, RED_COLOR);
+    return dst;
+}
+
 Olivec_Canvas text_example(void)
 {
     int width  = 800;
@@ -517,6 +533,7 @@ Test_Case test_cases[] = {
     DEFINE_TEST_CASE(circle_example),
     DEFINE_TEST_CASE(ellipse_example),
     DEFINE_TEST_CASE(line_example),
+    DEFINE_TEST_CASE(test_line_bug_offset),
     DEFINE_TEST_CASE(text_example),
     DEFINE_TEST_CASE(test_hello_world),
     DEFINE_TEST_CASE(test_sprite_copy_bilinear),
