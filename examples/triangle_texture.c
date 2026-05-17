@@ -35,7 +35,7 @@ Olivec_Canvas render(float dt)
         int i1 = (i*2 + 0)%4;
         int i2 = (i*2 + 1)%4;
         int i3 = (i*2 + 2)%4;
-        olivec_fill_triangle3uv(
+        olivec_fill_triangle3uv_bilinear(
             oc,
             ps[i1][0], ps[i1][1],
             ps[i2][0], ps[i2][1],
@@ -45,17 +45,6 @@ Olivec_Canvas render(float dt)
             oc_png
         );
     }
-
-    // Triangle
-    // {
-    //     float x1 = WIDTH/2, y1 = HEIGHT/8;
-    //     float x2 = WIDTH/8, y2 = HEIGHT/2;
-    //     float x3 = WIDTH*7/8, y3 = HEIGHT*7/8;
-    //     rotate_point(&x1, &y1, WIDTH/2, HEIGHT/2, triangle_angle);
-    //     rotate_point(&x2, &y2, WIDTH/2, HEIGHT/2, triangle_angle);
-    //     rotate_point(&x3, &y3, WIDTH/2, HEIGHT/2, triangle_angle);
-    //     olivec_fill_triangle3uv(oc, x1, y1, x2, y2, x3, y3, uvs[0], uvs[1], uvs[3], oc_png);
-    // }
 
     return oc;
 }

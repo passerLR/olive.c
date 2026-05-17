@@ -65,6 +65,7 @@ OLIVECDEF void olivec_fill_triangle(Olivec_Canvas oc, int x1, int y1, int x2, in
 OLIVECDEF void olivec_fill_triangle3c(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t c1, uint32_t c2, uint32_t c3);
 OLIVECDEF void olivec_fill_triangle3z(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, float z1, float z2, float z3);
 OLIVECDEF void olivec_fill_triangle3uv(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, UV uv1, UV uv2, UV uv3, float z1, float z2, float z3, Olivec_Canvas tex);
+OLIVECDEF void olivec_fill_triangle3uv_bilinear(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, UV uv1, UV uv2, UV uv3, float z1, float z2, float z3, Olivec_Canvas tex);
 OLIVECDEF void olivec_draw_line(Olivec_Canvas oc, int x1, int y1, int x2, int y2, uint32_t color);
 OLIVECDEF void olivec_text(Olivec_Canvas oc, const char *text, Olivec_Font font, int x, int y, size_t size, uint32_t color);
 OLIVECDEF void olivec_sprite_copy (Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h);
@@ -72,6 +73,7 @@ OLIVECDEF void olivec_sprite_copy_bilinear(Olivec_Canvas dst, Olivec_Canvas src,
 OLIVECDEF void olivec_sprite_blend(Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h);
 OLIVECDEF bool olivec_normalize_rect(int x, int y, int w, int h, size_t width, size_t height, Olivec_Normalized_Rect *nr);
 OLIVECDEF bool olivec_norm_rect4tri(int x1, int y1, int x2, int y2, int x3, int y3, size_t width, size_t height, Olivec_Normalized_Rect *nr);
+OLIVECDEF uint32_t bilinear_pixel(Olivec_Canvas src, int nx, int ny, int w, int h);
 
 OLIVECDEF void rotate_point(float *x, float *y, float cx, float cy, float beta);
 
@@ -407,14 +409,45 @@ OLIVECDEF void olivec_fill_triangle3uv(Olivec_Canvas oc, int x1, int y1, int x2,
             if ((OLIVEC_SIGN(int, u1) == OLIVEC_SIGN(int, det) || u1 == 0) &&
                 (OLIVEC_SIGN(int, u2) == OLIVEC_SIGN(int, det) || u2 == 0) &&
                 (OLIVEC_SIGN(int, u3) == OLIVEC_SIGN(int, det) || u3 == 0)) {
-                float z = z1*u1/det + z2*u2/det + z3*u3/det;
-                int texture_x = (uv1.u*u1/det + uv2.u*u2/det + uv3.u*u3/det)*tex.width/z;
+                float z = z1*u1 + z2*u2 + z3*u3;
+                int texture_x = (uv1.u*u1 + uv2.u*u2 + uv3.u*u3)*tex.width/z;
                 if (texture_x < 0) texture_x = 0;
                 if ((size_t) texture_x >= tex.width) texture_x = tex.width - 1;
-                int texture_y = (uv1.v*u1/det + uv2.v*u2/det + uv3.v*u3/det)*tex.height/z; 
+                int texture_y = (uv1.v*u1 + uv2.v*u2 + uv3.v*u3)*tex.height/z;
                 if (texture_y < 0) texture_y = 0;
                 if ((size_t) texture_y >= tex.height) texture_y = tex.height - 1;
                 OLIVEC_PIXEL(oc, x, y) = OLIVEC_PIXEL(tex, texture_x, texture_y);
+            }
+        }
+    }
+}
+OLIVECDEF void olivec_fill_triangle3uv_bilinear(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, UV uv1, UV uv2, UV uv3, float z1, float z2, float z3, Olivec_Canvas tex)
+{
+    Olivec_Normalized_Rect nr = {0};
+    if (!olivec_norm_rect4tri(x1, y1, x2, y2, x3, y3, oc.width, oc.height, &nr)) return;
+
+    int x_BC = x3 - x2, y_BC = y3 - y2;
+    int x_CA = x1 - x3, y_CA = y1 - y3;
+    int det = x_BC*y_CA - x_CA*y_BC; if (det == 0) return;
+    for (int x = nr.x1; x <= nr.x2; x++) {
+        for (int y = nr.y1; y <= nr.y2; y++) {
+            int x_CP = x - x3, y_CP = y - y3;
+            int u1 = x_BC*y_CP - x_CP*y_BC;
+            int u2 = x_CA*y_CP - x_CP*y_CA;
+            int u3 = det - u1 - u2;
+            if ((OLIVEC_SIGN(int, u1) == OLIVEC_SIGN(int, det) || u1 == 0) &&
+                (OLIVEC_SIGN(int, u2) == OLIVEC_SIGN(int, det) || u2 == 0) &&
+                (OLIVEC_SIGN(int, u3) == OLIVEC_SIGN(int, det) || u3 == 0)) {
+                float z = z1*u1 + z2*u2 + z3*u3;
+                float texture_x = (uv1.u*u1 + uv2.u*u2 + uv3.u*u3)*tex.width/z;
+                if (texture_x < 0) texture_x = 0;
+                if (texture_x >= (float) tex.width) texture_x = tex.width - 1;
+                float texture_y = (uv1.v*u1 + uv2.v*u2 + uv3.v*u3)*tex.height/z;
+                if (texture_y < 0) texture_y = 0;
+                if (texture_y >= (float) tex.height) texture_y = tex.height - 1;
+
+                int precision = 100;
+                OLIVEC_PIXEL(oc, x, y) = bilinear_pixel(tex, texture_x*precision, texture_y*precision, precision, precision);
             }
         }
     }
@@ -499,6 +532,21 @@ uint32_t mix_color2(float x, uint32_t c1, float x1, uint32_t c2, float x2)
     return OLIVEC_RGBA(r, g, b, a);
 }
 
+OLIVECDEF uint32_t bilinear_pixel(Olivec_Canvas src, int nx, int ny, int w, int h)
+{
+    int nx1 = nx + w;
+    int ny1 = ny + h;
+    if (nx1/w >= (int) src.width) nx1 = (src.width - 1)*w;
+    if (ny1/h >= (int) src.height) ny1 = (src.height - 1)*h;
+    uint32_t c1 = OLIVEC_PIXEL(src, nx/w, ny/h);
+    uint32_t c2 = OLIVEC_PIXEL(src, nx1/w, ny/h);
+    uint32_t c3 = OLIVEC_PIXEL(src, nx/w, ny1/h);
+    uint32_t c4 = OLIVEC_PIXEL(src, nx1/w, ny1/h);
+    uint32_t c12 = mix_color2(nx, c1, nx/w*w, c2, nx1);
+    uint32_t c34 = mix_color2(nx, c3, nx/w*w, c4, nx1);
+    return mix_color2(ny, c12, ny/h*h, c34, ny1);
+}
+
 OLIVECDEF void olivec_sprite_copy_bilinear(Olivec_Canvas dst, Olivec_Canvas src, int x0, int y0, int w, int h)
 {
     if (src.width == 0 || src.height == 0) return;
@@ -512,17 +560,7 @@ OLIVECDEF void olivec_sprite_copy_bilinear(Olivec_Canvas dst, Olivec_Canvas src,
         for (int x = nr.x1; x <= nr.x2; ++x) {
             int nx  = (x - xa)*((int) src.width);
             int ny  = (y - ya)*((int) src.height);
-            int nx1 = (x - xa)*((int) src.width) + w;
-            int ny1 = (y - ya)*((int) src.height) + h;
-            if (nx1/w >= (int) src.width) nx1 = (src.width - 1)*w;
-            if (ny1/h >= (int) src.height) ny1 = (src.height - 1)*h;
-            uint32_t c1 = OLIVEC_PIXEL(src, nx/w, ny/h);
-            uint32_t c2 = OLIVEC_PIXEL(src, nx1/w, ny/h);
-            uint32_t c3 = OLIVEC_PIXEL(src, nx/w, ny1/h);
-            uint32_t c4 = OLIVEC_PIXEL(src, nx1/w, ny1/h);
-            uint32_t c12 = mix_color2(nx, c1, nx/w*w, c2, nx1);
-            uint32_t c34 = mix_color2(nx, c3, nx/w*w, c4, nx1);
-            OLIVEC_PIXEL(dst, x, y) = mix_color2(ny, c12, ny/h*h, c34, ny1);
+            OLIVEC_PIXEL(dst, x, y) = bilinear_pixel(src, nx, ny, w, h);
         }
     }
 }
