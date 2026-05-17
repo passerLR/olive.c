@@ -4,6 +4,7 @@
 #define HEIGHT 720
 #define BACKGROUND_COLOR 0xFF181818
 
+#define EPSILON 1e-6
 // #define PI 3.14159265359
 
 // float sinf(float x);
@@ -40,6 +41,8 @@ Vector3 make_vector3(float x, float y, float z)
 
 Vector2 project_3d_2d(Vector3 v3)
 {
+    if (v3.z < 0) v3.z = -v3.z;
+    if (v3.z < EPSILON) v3.z += EPSILON;
     return make_vector2(v3.x/v3.z, v3.y/v3.z);
 }
 
@@ -48,17 +51,22 @@ Vector2 project_2d_scr(Vector2 v2)
     return make_vector2((v2.x + 1)/2*WIDTH, (1 - (v2.y + 1)/2)*HEIGHT);
 }
 
-float cz = 0;
 Vector3 rotate_y(Vector3 p, float delta_angle)
 {
-    float xt = p.x - 0;
-    float zt = p.z - cz;
+    float xt = p.x;
+    float zt = p.z;
 
     float cost = cosf(delta_angle);
     float sint = sinf(delta_angle);
 
-    return make_vector3(cost*xt - sint*zt, p.y, sint*xt + cost*zt + cz);
+    return make_vector3(cost*xt - sint*zt, p.y, sint*xt + cost*zt);
 }
+
+static float near = 0.1f;
+static float far = 5.0f;
+// static float cx = 0.0f;
+// static float cy = 0.0f;
+static float cz = 2.0f;
 
 Olivec_Canvas render(float dt)
 {
@@ -75,7 +83,9 @@ Olivec_Canvas render(float dt)
         Vector3 v1 = rotate_y(make_vector3(vertices[a][0], vertices[a][1], vertices[a][2]), angle);
         Vector3 v2 = rotate_y(make_vector3(vertices[b][0], vertices[b][1], vertices[b][2]), angle);
         Vector3 v3 = rotate_y(make_vector3(vertices[c][0], vertices[c][1], vertices[c][2]), angle);
-        v1.z += 1.5; v2.z += 1.5; v3.z += 1.5;
+        // v1.x += cx; v2.x += cx; v3.x += cx;
+        // v1.y += cy; v2.y += cy; v3.y += cy;
+        v1.z += cz; v2.z += cz; v3.z += cz;
         Vector2 p1 = project_2d_scr(project_3d_2d(v1));
         Vector2 p2 = project_2d_scr(project_3d_2d(v2));
         Vector2 p3 = project_2d_scr(project_3d_2d(v3));
@@ -95,7 +105,7 @@ Olivec_Canvas render(float dt)
                     (OLIVEC_SIGN(int, u2) == OLIVEC_SIGN(int, det) || u2 == 0) &&
                     (OLIVEC_SIGN(int, u3) == OLIVEC_SIGN(int, det) || u3 == 0)) {
                     float z = 1.0f/v1.z*u1/det + 1.0f/v2.z*u2/det + 1.0f/v3.z*u3/det;
-                    if (z <= zbuffer[y*WIDTH + x]) continue;
+                    if (1.0f/far > z || z > 1.0f/near || z <= zbuffer[y*WIDTH + x]) continue;
                     zbuffer[y*WIDTH + x] = z;
                     // OLIVEC_PIXEL(oc, x, y) = mix_color3(0xFF1818FF, 0xFF18FF18, 0xFFFF1818, u1, u2, det);
                     olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), mix_color3(0xFF1818FF, 0xFF18FF18, 0xFFFF1818, u1, u2, det));
