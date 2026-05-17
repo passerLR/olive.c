@@ -323,6 +323,17 @@ Olivec_Canvas circle_example(void)
     return oc;
 }
 
+Olivec_Canvas ellipse_example(void)
+{
+    int width  = 400;
+    int height = 300;
+    Olivec_Canvas oc = canvas_alloc(width, height);
+    olivec_fill(oc, BACKGROUND_COLOR);
+    olivec_fill_ellipse(oc, width/2, height/2, width/4, height/6, FOREGROUND_COLOR);
+    
+    return oc;
+}
+
 Olivec_Canvas line_example(void)
 {
     int width  = 400;
@@ -504,6 +515,7 @@ Test_Case test_cases[] = {
     DEFINE_TEST_CASE(test_alpha_blending),
     DEFINE_TEST_CASE(checker_example),
     DEFINE_TEST_CASE(circle_example),
+    DEFINE_TEST_CASE(ellipse_example),
     DEFINE_TEST_CASE(line_example),
     DEFINE_TEST_CASE(text_example),
     DEFINE_TEST_CASE(test_hello_world),

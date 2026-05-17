@@ -61,6 +61,7 @@ OLIVECDEF void olivec_fill(Olivec_Canvas oc, uint32_t color);
 OLIVECDEF void olivec_fill_rect(Olivec_Canvas oc, int x, int y, int w, int h, uint32_t color);
 OLIVECDEF void olivec_frame(Olivec_Canvas oc, int x, int y, int w, int h, size_t t, uint32_t color);
 OLIVECDEF void olivec_fill_circle(Olivec_Canvas oc, int cx, int cy, int r, uint32_t color);
+OLIVECDEF void olivec_fill_ellipse(Olivec_Canvas oc, int cx, int cy, int rx, int ry, uint32_t color);
 OLIVECDEF void olivec_fill_triangle(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t color);
 OLIVECDEF void olivec_fill_triangle3c(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t c1, uint32_t c2, uint32_t c3);
 OLIVECDEF void olivec_fill_triangle3z(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, float z1, float z2, float z3);
@@ -212,6 +213,23 @@ OLIVECDEF void olivec_fill_circle(Olivec_Canvas oc, int cx, int cy, int r, uint3
             int dx = x - cx;
             int dy = y - cy;
             if (dx*dx + dy*dy <= r*r) {
+                olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
+            }
+        }
+    }
+}
+
+OLIVECDEF void olivec_fill_ellipse(Olivec_Canvas oc, int cx, int cy, int rx, int ry, uint32_t color)
+{
+    Olivec_Normalized_Rect nr = {0};
+    int r1 = rx + OLIVEC_SIGN(int, rx);
+    int r2 = ry + OLIVEC_SIGN(int, ry);
+    if (!olivec_normalize_rect(cx - r1, cy - r2, 2*r1, 2*r2, oc.width, oc.height, &nr)) return;
+    for (int y = nr.y1; y <= nr.y2; ++y) {
+        for (int x = nr.x1; x <= nr.x2; ++x) {
+            int dx = (x - cx)*ry;
+            int dy = (y - cy)*rx;
+            if (dx*dx + dy*dy <= rx*rx*ry*ry) {
                 olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
             }
         }
