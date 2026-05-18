@@ -39,6 +39,16 @@ Vector3 make_vector3(float x, float y, float z)
     return v3;
 }
 
+float dot_product_vector3(Vector3 v1, Vector3 v2)
+{
+    return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
+}
+
+Vector3 vector_2d_3d(Vector2 v, float z)
+{
+    return make_vector3(v.x, v.y, z);
+}
+
 Vector2 project_3d_2d(Vector3 v3)
 {
     // if (v3.z < 0) v3.z = -v3.z;
@@ -66,7 +76,8 @@ static float near = 0.1f;
 static float far = 5.0f;
 // static float cx = 0.0f;
 // static float cy = 0.0f;
-static float cz = 1.8f;
+static float cz = 1.5f;
+//static Vector3 camera = {0, 0 , 1};
 
 Olivec_Canvas render(float dt)
 {
@@ -77,15 +88,30 @@ Olivec_Canvas render(float dt)
     for (size_t i = 0; i < WIDTH*HEIGHT; ++i) zbuffer[i] = 0;
 
     for (size_t i = 0; i < faces_count; ++i) {
-        int a = faces[i][0];
-        int b = faces[i][1];
-        int c = faces[i][2];
+        int a, b, c;
+        a = faces_v[i][0];
+        b = faces_v[i][1];
+        c = faces_v[i][2];
         Vector3 v1 = rotate_y(make_vector3(vertices[a][0], vertices[a][1], vertices[a][2]), angle);
         Vector3 v2 = rotate_y(make_vector3(vertices[b][0], vertices[b][1], vertices[b][2]), angle);
         Vector3 v3 = rotate_y(make_vector3(vertices[c][0], vertices[c][1], vertices[c][2]), angle);
         // v1.x += cx; v2.x += cx; v3.x += cx;
         // v1.y += cy; v2.y += cy; v3.y += cy;
         v1.z += cz; v2.z += cz; v3.z += cz;
+
+        if (normals_count > 0) {
+            a = faces_vn[i][0];
+            b = faces_vn[i][1];
+            c = faces_vn[i][2];
+            Vector3 vn1 = rotate_y(make_vector3(normals[a][0], normals[a][1], normals[a][2]), angle);
+            Vector3 vn2 = rotate_y(make_vector3(normals[b][0], normals[b][1], normals[b][2]), angle);
+            Vector3 vn3 = rotate_y(make_vector3(normals[c][0], normals[c][1], normals[c][2]), angle);
+            Vector3 camera1 = vector_2d_3d(project_3d_2d(v1), 1.0f);
+            Vector3 camera2 = vector_2d_3d(project_3d_2d(v2), 1.0f);
+            Vector3 camera3 = vector_2d_3d(project_3d_2d(v3), 1.0f);
+            if (dot_product_vector3(camera1, vn1) > 0 && dot_product_vector3(camera2, vn2) > 0 && dot_product_vector3(camera3, vn3) > 0) continue;
+        }
+
         Vector2 p1 = project_2d_scr(project_3d_2d(v1));
         Vector2 p2 = project_2d_scr(project_3d_2d(v2));
         Vector2 p3 = project_2d_scr(project_3d_2d(v3));

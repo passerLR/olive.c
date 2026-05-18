@@ -1,0 +1,9 @@
+127.0.0.1 - - [18/May/2026 16:49:56] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [18/May/2026 16:49:56] "GET /wasm/triangle.wasm HTTP/1.1" 304 -
+127.0.0.1 - - [18/May/2026 16:49:56] "GET /wasm/rotating_3d.wasm HTTP/1.1" 304 -
+127.0.0.1 - - [18/May/2026 16:49:56] "GET /wasm/squish.wasm HTTP/1.1" 304 -
+127.0.0.1 - - [18/May/2026 16:49:56] "GET /wasm/triangle_texture.wasm HTTP/1.1" 304 -
+127.0.0.1 - - [18/May/2026 16:49:56] "GET /wasm/triangle_3d.wasm HTTP/1.1" 304 -
+127.0.0.1 - - [18/May/2026 16:49:56] "GET /wasm/cup3d.wasm HTTP/1.1" 304 -
+127.0.0.1 - - [18/May/2026 16:49:56] "GET /wasm/teapot3d.wasm HTTP/1.1" 304 -
+127.0.0.1 - - [18/May/2026 16:49:56] "GET /wasm/penger3d.wasm HTTP/1.1" 304 -

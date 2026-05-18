@@ -121,7 +121,12 @@ static const float vertices[][3] = {
     {-0.389406, -0.316347, 0.210393},
     {-0.287114, -0.316413, 0.350998},
 };
-static const int faces[224][3] = {
+#define normals_count 0
+static const float normals[1][3] = {0};
+#define texcoords_count 0
+static const float texcoords[1][3] = {0};
+#define faces_count 224
+static const int faces_v[224][3] = {
     {26, 17, 16},
     {9, 10, 0},
     {16, 7, 6},
@@ -347,5 +352,6 @@ static const int faces[224][3] = {
     {9, 59, 58},
     {56, 55, 5},
 };
-#define faces_count 224
+static const int faces_vt[1][3] = {0};
+static const int faces_vn[1][3] = {0};
 #endif // OBJ_H_

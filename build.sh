@@ -4,7 +4,7 @@ set -xe
 
 CC=gcc
 EMCC=clang
-COMMON_CFLAGS="-Wall -Wextra -std=c99 -ggdb -I. -I./thirdparty/"
+COMMON_CFLAGS="-Wall -Wextra -std=gnu99 -ggdb -I. -I./thirdparty/"
 
 build_wasm_demo() {
     NAME=$1
@@ -38,6 +38,7 @@ build_all_vc_demos() {
     build_vc_demo triangle_texture &
     build_vc_demo cup3d &
     build_vc_demo teapot3d &
+    build_vc_demo penger3d &
     wait # TODO: the whole script must fail if one of the jobs fails
 }
 
@@ -52,10 +53,10 @@ build_tools() {
 build_assets() {
     mkdir -p ./assets/
     ./bin/png2c -o ./assets/ppng.c ./assets/tsodinPog.png &
-    # ./bin/png2c -n Sadge -o ./assets/Sadge.c ./assets/Sadge.png &
-    ./bin/png2c -n kun -o ./assets/kun.c ./assets/kun.png&
-    ./bin/obj2c ./assets/cup.obj -o ./assets/cup.c &
-    ./bin/obj2c ./assets/teapot.obj -o ./assets/teapot.c -s 0.40 &
+    ./bin/png2c -n kun -o ./assets/kun.c ./assets/kun.png &
+    ./bin/obj2c -o ./assets/cup.c ./assets/cup.obj &
+    ./bin/obj2c -s 0.40 -o ./assets/teapot.c ./assets/teapot.obj &
+    ./bin/obj2c -s 1.40 -o ./assets/penger.c ./assets/penger-obj/penger/penger.obj &
     wait # TODO: the whole script must fail if one of the jobs fails
 }
 

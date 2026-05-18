@@ -3647,7 +3647,12 @@ static const float vertices[][3] = {
     {1.284450, 0.360938, 0.000000},
     {1.286800, 0.359160, 0.000000},
 };
-static const int faces[6320][3] = {
+#define normals_count 0
+static const float normals[1][3] = {0};
+#define texcoords_count 0
+static const float texcoords[1][3] = {0};
+#define faces_count 6320
+static const int faces_v[6320][3] = {
     {2908, 2920, 2938},
     {2938, 2930, 2908},
     {2868, 2876, 2920},
@@ -9969,5 +9974,6 @@ static const int faces[6320][3] = {
     {3021, 3020, 3000},
     {3000, 3003, 3021},
 };
-#define faces_count 6320
+static const int faces_vt[1][3] = {0};
+static const int faces_vn[1][3] = {0};
 #endif // OBJ_H_
