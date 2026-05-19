@@ -42,8 +42,10 @@ void generate_c_code_from_pixels(FILE *out, uint32_t *data, int x, int y, const 
 
     fprintf(out, "#ifndef %s_H_\n", capital_name);
     fprintf(out, "#define %s_H_\n", capital_name);
-    fprintf(out, "size_t %s_width = %d;\n", name, x);
-    fprintf(out, "size_t %s_height = %d;\n", name, y);
+    // fprintf(out, "size_t %s_width = %d;\n", name, x);
+    // fprintf(out, "size_t %s_height = %d;\n", name, y);
+    fprintf(out, "#define %s_width   %d\n", name, x);
+    fprintf(out, "#define %s_height  %d\n", name, y);
     fprintf(out, "uint32_t %s_pixels[] = {\n", name);
     size_t length = (size_t)(x * y);
     size_t width = 7;

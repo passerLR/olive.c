@@ -52,6 +52,7 @@ build_tools() {
 
 build_assets() {
     mkdir -p ./assets/
+    ./bin/png2c -o ./assets/penger_texture.c ./assets/penger-obj/penger/penger.png &
     ./bin/png2c -o ./assets/ppng.c ./assets/tsodinPog.png &
     ./bin/png2c -n kun -o ./assets/kun.c ./assets/kun.png &
     ./bin/obj2c -o ./assets/cup.c ./assets/cup.obj &

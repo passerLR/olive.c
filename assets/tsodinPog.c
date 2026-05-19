@@ -1,7 +1,7 @@
 #ifndef PNG_H_
 #define PNG_H_
-size_t png_width = 112;
-size_t png_height = 112;
+#define png_width   112;
+#define png_height  112;
 uint32_t png_pixels[] = {
    0xFF6C5D53,0xFF6C5D53,0xFF6C5D53,0xFF6C5D53,0xFF6C5D53,0xFF6C5D53,0xFF6C5D53,
    0xFF6D5E54,0xFF67594F,0xFF0A0907,0xFF020303,0xFFB1BFD4,0xFFD9EAFB,0xFFD1E2FA,

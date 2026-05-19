@@ -172,9 +172,9 @@ void generate_code(FILE *out, Vertices vertices, Vertices normals, TexCoords tex
 
     fprintf(out, "#define texcoords_count %zu\n", texcoords.count);
     if (texcoords.count == 0) {
-        fprintf(out, "static const float texcoords[1][3] = {0};\n");
+        fprintf(out, "static const float texcoords[1][2] = {0};\n");
     } else {
-        fprintf(out, "static const float texcoords[][3] = {\n");
+        fprintf(out, "static const float texcoords[][2] = {\n");
         for (size_t i = 0; i < texcoords.count; ++i) {
             Vector2 vt = texcoords.items[i];
             fprintf(out, "    {%f, %f},\n", vt.x, vt.y);
@@ -338,6 +338,8 @@ int main(int argc, char **argv)
     float lx = FLT_MAX, hx = FLT_MIN;
     float ly = FLT_MAX, hy = FLT_MIN;
     float lz = FLT_MAX, hz = FLT_MIN;
+    float ltx = FLT_MAX, htx = FLT_MIN;
+    float lty = FLT_MAX, hty = FLT_MIN;
     int lf = INT_MAX, hf = INT_MIN;
     bool one_object_encountered = false;
     size_t one_object_line_number = 0;
@@ -388,10 +390,14 @@ int main(int argc, char **argv)
 
                 line = sv_trim_left(line);
                 float x = strtof(line.data, &endptr);
+                if (ltx > x) ltx = x;
+                if (htx < x) htx = x;
                 sv_chop_left(&line, endptr - line.data);
 
                 line = sv_trim_left(line);
                 float y = strtof(line.data, &endptr);
+                if (lty > y) lty = y;
+                if (hty < y) hty = y;
                 sv_chop_left(&line, endptr - line.data);
 
                 da_append(&tcoords, make_vector2(x, y));
@@ -437,7 +443,7 @@ int main(int argc, char **argv)
     if (vnormals.count > 0) 
         printf("Normals:                %zu\n", vnormals.count);
     if (tcoords.count > 0) 
-        printf("Texture Coordinates:    %zu\n", tcoords.count);
+        printf("Texture Coordinates:    %zu (u: %f..%f, v: %f..%f)\n", tcoords.count, ltx, htx, lty, hty);
     if (faces.count > 0) 
         printf("Faces:                  %zu (vertices index: %d..%d)\n", faces.count, lf, hf);
 

@@ -1189,7 +1189,7 @@ static const float normals[][3] = {
     {-0.114800, -0.983800, -0.137700},
 };
 #define texcoords_count 659
-static const float texcoords[][3] = {
+static const float texcoords[][2] = {
     {0.009831, 0.035651},
     {0.022569, 0.022913},
     {0.022569, 0.010176},

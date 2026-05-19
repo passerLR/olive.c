@@ -76,14 +76,14 @@ OLIVECDEF bool olivec_normalize_rect(int x, int y, int w, int h, size_t width, s
 OLIVECDEF bool olivec_norm_rect4tri(int x1, int y1, int x2, int y2, int x3, int y3, size_t width, size_t height, Olivec_Normalized_Rect *nr);
 OLIVECDEF uint32_t bilinear_pixel(Olivec_Canvas src, int nx, int ny, int w, int h);
 
-OLIVECDEF void rotate_point(float *x, float *y, float cx, float cy, float beta);
 
+#define PI 3.14159265359
+float sinf(float x);
+float cosf(float x);
+OLIVECDEF void rotate_point(float *x, float *y, float cx, float cy, float beta);
 
 #ifdef OLIVEC_IMPLEMENTATION
 
-float sinf(float x);
-float cosf(float x);
-#define PI 3.14159265359
 // TODO: Specify the origin, axis, and angle to achieve spatial rotation
 OLIVECDEF void rotate_point(float *x, float *y, float cx, float cy, float theta)
 {
@@ -295,6 +295,14 @@ OLIVECDEF bool olivec_norm_rect4tri(int x1, int y1, int x2, int y2, int x3, int 
 
     return true;
 }
+
+OLIVECDEF bool is_inner(int u1, int u2, int u3, int det)
+{
+    return (OLIVEC_SIGN(int, u1) == OLIVEC_SIGN(int, det) || u1 == 0) &&
+           (OLIVEC_SIGN(int, u2) == OLIVEC_SIGN(int, det) || u2 == 0) &&
+           (OLIVEC_SIGN(int, u3) == OLIVEC_SIGN(int, det) || u3 == 0);
+}
+
 OLIVECDEF void olivec_fill_triangle(Olivec_Canvas oc, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t color)
 {
     Olivec_Normalized_Rect nr = {0};
@@ -309,11 +317,8 @@ OLIVECDEF void olivec_fill_triangle(Olivec_Canvas oc, int x1, int y1, int x2, in
             int u1 = x_BC*y_CP - x_CP*y_BC;
             int u2 = x_CA*y_CP - x_CP*y_CA;
             int u3 = det - u1 - u2;
-            // if (u1*det >= 0 && u2*det >= 0 && u3*det >= 0) {
-            if ((OLIVEC_SIGN(int, u1) == OLIVEC_SIGN(int, det) || u1 == 0) &&
-                (OLIVEC_SIGN(int, u2) == OLIVEC_SIGN(int, det) || u2 == 0) &&
-                (OLIVEC_SIGN(int, u3) == OLIVEC_SIGN(int, det) || u3 == 0)) {
-                olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
+            if (is_inner(u1, u2, u3, det)) {
+                 olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), color);
             }
         }
     }
@@ -361,11 +366,8 @@ OLIVECDEF void olivec_fill_triangle3c(Olivec_Canvas oc, int x1, int y1, int x2, 
             int u1 = x_BC*y_CP - x_CP*y_BC;
             int u2 = x_CA*y_CP - x_CP*y_CA;
             int u3 = det - u1 - u2;
-            if ((OLIVEC_SIGN(int, u1) == OLIVEC_SIGN(int, det) || u1 == 0) &&
-                (OLIVEC_SIGN(int, u2) == OLIVEC_SIGN(int, det) || u2 == 0) &&
-                (OLIVEC_SIGN(int, u3) == OLIVEC_SIGN(int, det) || u3 == 0)) {
-                olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), mix_color3(c1, c2, c3, u1, u2, det));
-            }
+            if (!is_inner(u1, u2, u3, det)) continue;
+            olivec_blend_color(&OLIVEC_PIXEL(oc, x, y), mix_color3(c1, c2, c3, u1, u2, det));
         }
     }
 }
@@ -384,12 +386,9 @@ OLIVECDEF void olivec_fill_triangle3z(Olivec_Canvas oc, int x1, int y1, int x2, 
             int u1 = x_BC*y_CP - x_CP*y_BC;
             int u2 = x_CA*y_CP - x_CP*y_CA;
             int u3 = det - u1 - u2;
-            if ((OLIVEC_SIGN(int, u1) == OLIVEC_SIGN(int, det) || u1 == 0) &&
-                (OLIVEC_SIGN(int, u2) == OLIVEC_SIGN(int, det) || u2 == 0) &&
-                (OLIVEC_SIGN(int, u3) == OLIVEC_SIGN(int, det) || u3 == 0)) {
-                float z = z1*u1/det + z2*u2/det + z3*u3/det;
-                *(float*)&OLIVEC_PIXEL(oc, x, y) = z;
-            }
+            if (!is_inner(u1, u2, u3, det)) continue;
+            float z = z1*u1/det + z2*u2/det + z3*u3/det;
+            *(float*)&OLIVEC_PIXEL(oc, x, y) = z;
         }
     }
 }
@@ -408,18 +407,15 @@ OLIVECDEF void olivec_fill_triangle3uv(Olivec_Canvas oc, int x1, int y1, int x2,
             int u1 = x_BC*y_CP - x_CP*y_BC;
             int u2 = x_CA*y_CP - x_CP*y_CA;
             int u3 = det - u1 - u2;
-            if ((OLIVEC_SIGN(int, u1) == OLIVEC_SIGN(int, det) || u1 == 0) &&
-                (OLIVEC_SIGN(int, u2) == OLIVEC_SIGN(int, det) || u2 == 0) &&
-                (OLIVEC_SIGN(int, u3) == OLIVEC_SIGN(int, det) || u3 == 0)) {
-                float z = z1*u1 + z2*u2 + z3*u3;
-                int texture_x = (uv1.u*u1 + uv2.u*u2 + uv3.u*u3)*tex.width/z;
-                if (texture_x < 0) texture_x = 0;
-                if ((size_t) texture_x >= tex.width) texture_x = tex.width - 1;
-                int texture_y = (uv1.v*u1 + uv2.v*u2 + uv3.v*u3)*tex.height/z;
-                if (texture_y < 0) texture_y = 0;
-                if ((size_t) texture_y >= tex.height) texture_y = tex.height - 1;
-                OLIVEC_PIXEL(oc, x, y) = OLIVEC_PIXEL(tex, texture_x, texture_y);
-            }
+            if (!is_inner(u1, u2, u3, det)) continue;
+            float z = z1*u1 + z2*u2 + z3*u3;
+            int texture_x = (uv1.u*u1 + uv2.u*u2 + uv3.u*u3)*tex.width/z;
+            if (texture_x < 0) texture_x = 0;
+            if ((size_t) texture_x >= tex.width) texture_x = tex.width - 1;
+            int texture_y = (uv1.v*u1 + uv2.v*u2 + uv3.v*u3)*tex.height/z;
+            if (texture_y < 0) texture_y = 0;
+            if ((size_t) texture_y >= tex.height) texture_y = tex.height - 1;
+            OLIVEC_PIXEL(oc, x, y) = OLIVEC_PIXEL(tex, texture_x, texture_y);
         }
     }
 }

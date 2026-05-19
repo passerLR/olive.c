@@ -1,7 +1,7 @@
 #ifndef KUN_H_
 #define KUN_H_
-size_t kun_width = 250;
-size_t kun_height = 250;
+#define kun_width   250
+#define kun_height  250
 uint32_t kun_pixels[] = {
    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
    0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
