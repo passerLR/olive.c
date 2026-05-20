@@ -77,8 +77,10 @@ static float near = 0.1f;
 static float far = 5.0f;
 // static float cx = 0.0f;
 // static float cy = 0.0f;
-static float cz = 1.5f;
+// static float cz = 1.5f;
+#ifdef BACKFACE_CULLING
 static Vector3 camera = {0, 0 , 1};
+#endif
 
 Olivec_Canvas render(float dt)
 {
@@ -99,7 +101,8 @@ Olivec_Canvas render(float dt)
         // v1.x += cx; v2.x += cx; v3.x += cx;
         // v1.y += cy; v2.y += cy; v3.y += cy;
         v1.z += cz; v2.z += cz; v3.z += cz;
-#if 1
+
+#ifdef BACKFACE_CULLING
         Vector3 vn1 = {0}, vn2 = {0}, vn3 = {0};
         if (normals_count > 0) {
             a = faces_vn[i][0];
@@ -139,7 +142,7 @@ Olivec_Canvas render(float dt)
                 int u2 = x_CA*y_CP - x_CP*y_CA;
                 int u3 = det - u1 - u2;
                 if (!is_inner(u1, u2, u3, det)) continue;
-#if 1
+#ifdef BACKFACE_CULLING
                 // backface culling
                 if (normals_count > 0) {
                     Vector3 vn = make_vector3(

@@ -9,3 +9,4 @@ tags
 nob
 nob.exe
 *.old
+assets/*.c

@@ -47,7 +47,7 @@ build_tools() {
     $CC $COMMON_CFLAGS -O2 -o ./bin/png2c ./tools/png2c.c -lm &
     $CC $COMMON_CFLAGS -O2 -o ./bin/obj2c ./tools/obj2c.c -lm &
     $CC $COMMON_CFLAGS -O2 -o ./bin/img2term ./tools/img2term.c -lm &
-    wait # TODO: the whole script must fail if one of the jobs fails
+    wait
 }
 
 build_assets() {
@@ -58,7 +58,7 @@ build_assets() {
     ./bin/obj2c -o ./assets/cup.c ./assets/cup.obj &
     ./bin/obj2c -s 0.40 -o ./assets/teapot.c ./assets/teapot.obj &
     ./bin/obj2c -s 1.40 -o ./assets/penger.c ./assets/penger-obj/penger/penger.obj &
-    wait # TODO: the whole script must fail if one of the jobs fails
+    wait
 }
 
 build_tests() {

@@ -44,6 +44,9 @@ bool build_assets(Cmd *cmd, Procs *procs)
     cmd_append(cmd, "./bin/obj2c", "-s", "1.40", "-o", "./assets/penger.c", "./assets/penger-obj/penger/penger.obj");
     if (!cmd_run(cmd, .async = procs)) return false;
 
+    cmd_append(cmd, "./bin/obj2c", "-s", "0.02", "-o", "./assets/turbine.c", "./assets/turbine.obj");
+    if (!cmd_run(cmd, .async = procs)) return false;
+
     return true;
 }
 
@@ -89,6 +92,7 @@ const char *names[] = {
     "cup3d",
     "teapot3d",
     "penger3d",
+    "turbine",
 };
 
 bool copy_all_vc_demos_to_build(void)
