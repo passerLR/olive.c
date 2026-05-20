@@ -10,3 +10,4 @@ nob
 nob.exe
 *.old
 assets/*.c
+*.log

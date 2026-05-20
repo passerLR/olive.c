@@ -1,10 +1,12 @@
-127.0.0.1 - - [19/May/2026 16:32:08] "GET / HTTP/1.1" 304 -
-127.0.0.1 - - [19/May/2026 16:32:08] "GET /index.js HTTP/1.1" 304 -
-127.0.0.1 - - [19/May/2026 16:32:08] "GET /wasm/triangle.wasm HTTP/1.1" 200 -
-127.0.0.1 - - [19/May/2026 16:32:08] "GET /wasm/rotating_3d.wasm HTTP/1.1" 200 -
-127.0.0.1 - - [19/May/2026 16:32:08] "GET /wasm/triangle_3d.wasm HTTP/1.1" 200 -
-127.0.0.1 - - [19/May/2026 16:32:08] "GET /wasm/squish.wasm HTTP/1.1" 200 -
-127.0.0.1 - - [19/May/2026 16:32:08] "GET /wasm/triangle_texture.wasm HTTP/1.1" 200 -
-127.0.0.1 - - [19/May/2026 16:32:08] "GET /wasm/cup3d.wasm HTTP/1.1" 200 -
-127.0.0.1 - - [19/May/2026 16:32:08] "GET /wasm/penger3d.wasm HTTP/1.1" 200 -
-127.0.0.1 - - [19/May/2026 16:32:08] "GET /wasm/teapot3d.wasm HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET / HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET /index.js HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET /wasm/triangle.wasm HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET /wasm/squish.wasm HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET /wasm/rotating_3d.wasm HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET /wasm/triangle_3d.wasm HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET /wasm/triangle_texture.wasm HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET /wasm/cup3d.wasm HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET /wasm/teapot3d.wasm HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:12] "GET /wasm/penger3d.wasm HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/May/2026 21:29:13] code 404, message File not found
+::ffff:127.0.0.1 - - [20/May/2026 21:29:13] "GET /favicon.ico HTTP/1.1" 404 -
